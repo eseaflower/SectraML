@@ -1,7 +1,7 @@
 var React = require("react");
 var test = require("./TestComponent");
 function buildContent() {
-    var c = React.createElement(test.Test, {"who": "Erik Sjöblom"});
+    var c = React.createElement(test.LoginForm, {"login_name": "eseaflower@hotmail.com"});
     return c;
 }
 function entry(contentId) {

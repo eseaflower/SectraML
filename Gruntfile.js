@@ -27,11 +27,36 @@ module.exports = function(grunt) {
           require: ["./components/Main.js:main"]
         }
       }
+    },
+    copy: {
+      dist: {
+        files: [
+          {
+            expand: true,
+            src: "node_modules/bootstrap/dist/css/*.min.css",
+            dest: "dist/css/",
+            flatten: true
+          },
+          {
+            expand: true,
+            src: "node_modules/bootstrap/dist/js/*.min.js",
+            dest: "dist/js/",
+            flatten: true
+          },
+          {
+            expand: true,
+            src: "node_modules/jquery/dist/*.min.js",
+            dest: "dist/js/",
+            flatten: true                        
+          }            
+        ]
+      }      
     }
     
     
   });
   grunt.loadNpmTasks("grunt-ts");
-  grunt.loadNpmTasks('grunt-browserify');
-  grunt.registerTask("default", ["ts", "browserify"]);
+  grunt.loadNpmTasks("grunt-browserify");
+  grunt.loadNpmTasks("grunt-contrib-copy")
+  grunt.registerTask("default", ["ts", "browserify", "copy"]);
 };

@@ -12,11 +12,31 @@ var Test = (function (_super) {
         _super.apply(this, arguments);
     }
     Test.prototype.render = function () {
-        return (React.createElement("h2", null, this.props.who, " "));
+        return (React.createElement("h2", null, this.props.who));
     };
     return Test;
 })(React.Component);
 exports.Test = Test;
+;
+;
+;
+var LoginForm = (function (_super) {
+    __extends(LoginForm, _super);
+    function LoginForm(props, context) {
+        _super.call(this, props, context);
+        this.state = { login_name: this.props.login_name };
+    }
+    LoginForm.prototype.handleOnChange = function (event) {
+        var ugly = event.target;
+        this.setState({ login_name: ugly.value });
+    };
+    LoginForm.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("form", null, React.createElement("input", {"type": "email", "onChange": function (event) { return _this.handleOnChange(event); }, "id": "inputEmail", "className": "form-control", "value": this.state.login_name, "placeholder": "Email address", "required": true}), React.createElement("label", null), React.createElement("button", {"className": "btn btn-md btn-primary btn-block", "type": "submit"}, "Sign in")));
+    };
+    return LoginForm;
+})(React.Component);
+exports.LoginForm = LoginForm;
 ;
 
 },{"react":157}],2:[function(require,module,exports){
@@ -19834,7 +19854,7 @@ module.exports = require('./lib/React');
 var React = require("react");
 var test = require("./TestComponent");
 function buildContent() {
-    var c = React.createElement(test.Test, {"who": "Erik Sjöblom"});
+    var c = React.createElement(test.LoginForm, {"login_name": "eseaflower@hotmail.com"});
     return c;
 }
 function entry(contentId) {

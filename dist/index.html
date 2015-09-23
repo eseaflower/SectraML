@@ -5,17 +5,31 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <meta charset="UTF-8" />
     <title>Sectra ML!</title>
-    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">      
-    <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css">      
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>    
     <script src="bundle.js"></script>
   </head>
-  <body>
-    <div id="content"></div>
-    <script>
+  <body>    
+    <!--<script>
       var main = require('main');
       main.entry("content");
-    </script>    
-    </body>
+    </script>-->    
+    <div class="container">      
+      <div class="row">
+        <div class="col-xs-3 col-xs-offset-3">
+        <div class="page-header">
+            <h1>Sectra ML</h1>
+        </div>
+        <div id="content">
+          <script>
+            var main = require('main');
+            main.entry("content");
+          </script>
+        </div>       
+        </div>
+        </div>
+    </div>
+  </body>
 </html>

@@ -7,6 +7,9 @@
   "installed": {
     "react/react.d.ts": {
       "commit": "6f6e5c7dd9effe21fee14eb65fe340ecbbc8580a"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "32029fcb4e1a3ef8968711b545d77b584435729d"
     }
   }
 }

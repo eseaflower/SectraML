@@ -4,7 +4,7 @@ import React=require("react");
 import test = require("./TestComponent");
 
 function buildContent() {
-	var c = <test.Test who="Erik Sjöblom"/>
+	var c = <test.LoginForm login_name="eseaflower@hotmail.com"/>
 	return c;
 }
 
