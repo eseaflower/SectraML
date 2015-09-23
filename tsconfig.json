@@ -3,9 +3,5 @@
 		"target": "ES5",
 		"jsx": "react",
 		"module": "commonjs"	
-	},
-	"files": [
-		"TestComponent.tsx",
-		"Main.tsx"
-	]
+	}
 }

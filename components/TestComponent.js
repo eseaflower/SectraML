@@ -3,16 +3,17 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-/// <reference path="./typings/tsd.d.ts"/>
 var React = require("react");
+;
 var Test = (function (_super) {
     __extends(Test, _super);
     function Test() {
         _super.apply(this, arguments);
     }
     Test.prototype.render = function () {
-        return (React.createElement("h2", null, this.props.who));
+        return (React.createElement("h2", null, this.props.who, " "));
     };
     return Test;
 })(React.Component);
 exports.Test = Test;
+;

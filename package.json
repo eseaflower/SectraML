@@ -12,5 +12,11 @@
     "bootstrap": "^3.3.5",
     "express": "^4.13.3",
     "react": "^0.13.3"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^4.0.1",
+    "grunt-ts": "^4.2.0",
+    "typescript": "^1.7.0-dev.20150923"
   }
 }

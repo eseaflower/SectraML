@@ -4,14 +4,7 @@ module.exports = function(grunt) {
       compile: {
         files: [
           {            
-            expand: true,
-            flatten: true,
-            cwd: "./",
-            src: ["./**/*.ts","./**/*.tsx", "!./typings/**/*.ts" ,"!./node_modules/**/*.ts", "!./node_modules/**/*.tsx"],
-            dest: "./",            
-            rename: function(dest, src) {
-              return "sd";
-            }
+            src: ["./**/*.ts","./**/*.tsx", "!./typings/**/*.ts" ,"!./node_modules/**/*.ts", "!./node_modules/**/*.tsx"]
           }
         ],        
 		    options:{
@@ -19,7 +12,7 @@ module.exports = function(grunt) {
           module: "commonjs",
           additionalFlags: "--jsx react",
           sourceMap: false,
-          compiler: "E:\\Program\\NodeJS\\npm_global\\node_modules\\typescript\\bin\\tsc",
+          compiler: "node_modules/typescript/bin/tsc",
           verbose: true,
           fast: "never"         
         }
@@ -28,10 +21,10 @@ module.exports = function(grunt) {
     browserify: {
       bundle: {
         files: {
-          "bundle.js": ["Main.js"]
+          "dist/bundle.js": ["components/Main.js"]
         },
       options: {
-          require: [["./Main.js", {expose:"main"}]]
+          require: ["./components/Main.js:main"]
         }
       }
     }
