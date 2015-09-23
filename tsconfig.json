@@ -3,5 +3,10 @@
 		"target": "ES5",
 		"jsx": "react",
 		"module": "commonjs"	
-	}
+	},
+	"exclude": [
+        "node_modules",
+        "typings"
+    ]
+
 }
