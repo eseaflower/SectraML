@@ -1,0 +1,2 @@
+SET VS100COMNTOOLS=%VS120COMNTOOLS%
+pip install tornado
