@@ -5,33 +5,22 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 ;
-var Test = (function (_super) {
-    __extends(Test, _super);
-    function Test() {
-        _super.apply(this, arguments);
-    }
-    Test.prototype.render = function () {
-        return (React.createElement("h2", null, this.props.who));
-    };
-    return Test;
-})(React.Component);
-exports.Test = Test;
-;
-;
-;
 var LoginForm = (function (_super) {
     __extends(LoginForm, _super);
     function LoginForm(props, context) {
         _super.call(this, props, context);
-        this.state = { login_name: this.props.login_name };
     }
-    LoginForm.prototype.handleOnChange = function (event) {
-        var ugly = event.target;
-        this.setState({ login_name: ugly.value });
+    LoginForm.prototype.handleOnChange = function (elment_name) {
+        var htmlComponent = this.refs[elment_name];
+        this.props.onChanged(htmlComponent.getDOMNode().value);
+    };
+    LoginForm.prototype.handleSubmit = function (event) {
+        this.props.onLogin();
+        event.preventDefault();
     };
     LoginForm.prototype.render = function () {
         var _this = this;
-        return (React.createElement("form", null, React.createElement("input", {"type": "email", "onChange": function (event) { return _this.handleOnChange(event); }, "id": "inputEmail", "className": "form-control", "value": this.state.login_name, "placeholder": "Email address", "required": true}), React.createElement("label", null), React.createElement("button", {"className": "btn btn-md btn-primary btn-block", "type": "submit"}, "Sign in")));
+        return (React.createElement("form", {"onSubmit": function (event) { return _this.handleSubmit(event); }}, React.createElement("input", {"type": "email", "onChange": function (event) { return _this.handleOnChange("login_input"); }, "ref": "login_input", "id": "inputEmail", "className": "form-control", "value": this.props.login_name, "disabled": this.props.login_in_progress, "placeholder": "Email address", "required": true}), React.createElement("label", null), React.createElement("button", {"className": "btn btn-md btn-primary btn-block", "type": "submit"}, "Sign in")));
     };
     return LoginForm;
 })(React.Component);

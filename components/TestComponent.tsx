@@ -1,44 +1,39 @@
 /// <reference path="../typings/tsd.d.ts"/>
 import React=require("react");
 
-export interface ITestProps {
-	who:string;		
-};
-
-
-export class Test extends React.Component<ITestProps, any> {
-	render() {						
-		return(<h2>{this.props.who}</h2>)
-	}		
-};
-
 export interface ILoginFormProps {
-	login_name:string;	
-};
-interface ILoginFormState {
 	login_name:string;
+	login_in_progress:boolean;	
+	onChanged: (new_value:string)=>void;
+	onLogin: ()=>void;
 };
 
 
-export class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
+export class LoginForm extends React.Component<ILoginFormProps, {}> {
 	constructor(props?:ILoginFormProps, context?:any) {
-		super(props, context);
-		this.state = {login_name: this.props.login_name};
+		super(props, context);		
 	}
 	
-	private handleOnChange(event:React.FormEvent):void {		
-		var ugly = event.target as any;
-		this.setState({login_name: ugly.value});
+	private handleOnChange(elment_name:string):void {		
+		var htmlComponent = this.refs[elment_name] as React.ClassicComponent<any, any>;
+		this.props.onChanged(htmlComponent.getDOMNode<HTMLInputElement>().value);
 	}
+	private handleSubmit(event:React.FormEvent):void {		
+		this.props.onLogin();
+		event.preventDefault();
+	}
+	
 	
 	public render() : JSX.Element {		
 		return (
-			<form>
+			<form onSubmit={(event:React.FormEvent) => this.handleSubmit(event)}>
 				<input type="email" 
-					onChange={(event:React.FormEvent) => this.handleOnChange(event)} 
+					onChange={(event:React.FormEvent) => this.handleOnChange("login_input") } 
+					ref = "login_input"
 					id="inputEmail" 
 					className="form-control" 
-					value={this.state.login_name} 
+					value={this.props.login_name}
+					disabled={this.props.login_in_progress} 
 					placeholder="Email address" required/>
 				<label></label>
 				<button className="btn btn-md btn-primary btn-block" type="submit">Sign in</button>			
