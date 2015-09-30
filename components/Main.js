@@ -5,38 +5,48 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 var test = require("./TestComponent");
+var AjaxJson = require("./AjaxJson");
 var MainComponent = (function (_super) {
     __extends(MainComponent, _super);
     function MainComponent(props, context) {
         _super.call(this, props, context);
-        this.state = { login_name: "a@b", login_in_progress: false };
+        this.state = { username: "a@b", loginInProgress: false };
     }
     MainComponent.prototype.copyState = function () {
         return {
-            login_name: this.state.login_name,
-            login_in_progress: this.state.login_in_progress
+            username: this.state.username,
+            loginInProgress: this.state.loginInProgress
         };
     };
     MainComponent.prototype.handleChange = function (value) {
         var newState = this.copyState();
-        newState.login_name = value;
+        newState.username = value;
         this.setState(newState);
     };
     MainComponent.prototype.onLoggedIn = function (data) {
         var newState = this.copyState();
-        newState.login_in_progress = false;
+        newState.loginInProgress = false;
         this.setState(newState);
     };
     MainComponent.prototype.handleLogin = function () {
         var _this = this;
-        $.post("/login", { "Testdata": 123 }, function (data, status, jqXHR) { return _this.onLoggedIn(data); }, "json");
+        var handle = AjaxJson.postJson("/login", { "username": this.state.username });
+        handle.done(function (data, status) {
+            alert("User id is " + data.userId.toString());
+            window.location.replace("http://www.na.se");
+        }).fail(function (xhr, status, err) {
+            alert(["Login failed:", xhr.status.toString(), xhr.statusText].join(' '));
+            var newState = _this.copyState();
+            newState.loginInProgress = false;
+            _this.setState(newState);
+        });
         var newState = this.copyState();
-        newState.login_in_progress = true;
+        newState.loginInProgress = true;
         this.setState(newState);
     };
     MainComponent.prototype.render = function () {
         var _this = this;
-        return React.createElement(test.LoginForm, {"onChanged": function (value) { return _this.handleChange(value); }, "onLogin": function () { return _this.handleLogin(); }, "login_name": this.state.login_name, "login_in_progress": this.state.login_in_progress});
+        return React.createElement(test.LoginForm, {"onChanged": function (value) { return _this.handleChange(value); }, "onLogin": function () { return _this.handleLogin(); }, "username": this.state.username, "loginInProgress": this.state.loginInProgress});
     };
     return MainComponent;
 })(React.Component);

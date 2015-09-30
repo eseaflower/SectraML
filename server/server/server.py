@@ -3,11 +3,22 @@ import tornado.web
 import os.path
 import json
 
+def jsonarg(member):
+    def inner(self):
+        jsonArgument = self.get_argument("args")
+        deserialized = json.loads(jsonArgument)
+        return member(self, deserialized)
+    return inner
+
+
 class LoginHandler(tornado.web.RequestHandler):
-    def post(self):
-        t_data = self.get_argument("Testdata")
-        if t_data == "123":
-            self.write(json.dumps({"user_id":321}))
+    @jsonarg
+    def post(self, args):
+        t_data = args["username"]
+        if t_data == "eseaflower@hotmail.com":
+            self.write(json.dumps({"userId":321}))
+        else:
+            self.send_error(403)
     get = post
 
 

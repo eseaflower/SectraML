@@ -10,8 +10,8 @@ var LoginForm = (function (_super) {
     function LoginForm(props, context) {
         _super.call(this, props, context);
     }
-    LoginForm.prototype.handleOnChange = function (elment_name) {
-        var htmlComponent = this.refs[elment_name];
+    LoginForm.prototype.handleOnChange = function (elementName) {
+        var htmlComponent = this.refs[elementName];
         this.props.onChanged(htmlComponent.getDOMNode().value);
     };
     LoginForm.prototype.handleSubmit = function (event) {
@@ -20,7 +20,7 @@ var LoginForm = (function (_super) {
     };
     LoginForm.prototype.render = function () {
         var _this = this;
-        return (React.createElement("form", {"onSubmit": function (event) { return _this.handleSubmit(event); }}, React.createElement("input", {"type": "email", "onChange": function (event) { return _this.handleOnChange("login_input"); }, "ref": "login_input", "id": "inputEmail", "className": "form-control", "value": this.props.login_name, "disabled": this.props.login_in_progress, "placeholder": "Email address", "required": true}), React.createElement("label", null), React.createElement("button", {"className": "btn btn-md btn-primary btn-block", "type": "submit"}, "Sign in")));
+        return (React.createElement("form", {"onSubmit": function (event) { return _this.handleSubmit(event); }}, React.createElement("input", {"type": "email", "onChange": function (event) { return _this.handleOnChange("usernameInput"); }, "ref": "usernameInput", "id": "usernameInput", "className": "form-control", "value": this.props.username, "disabled": this.props.loginInProgress, "placeholder": "Email address", "required": true}), React.createElement("label", null), React.createElement("button", {"className": "btn btn-md btn-primary btn-block", "type": "submit"}, "Sign in")));
     };
     return LoginForm;
 })(React.Component);
