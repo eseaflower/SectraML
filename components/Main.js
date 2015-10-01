@@ -32,8 +32,7 @@ var MainComponent = (function (_super) {
         var _this = this;
         var handle = AjaxJson.postJson("/login", { "username": this.state.username });
         handle.done(function (data, status) {
-            alert("User id is " + data.userId.toString());
-            window.location.replace("http://www.na.se");
+            window.location.replace(data.redirectUrl);
         }).fail(function (xhr, status, err) {
             alert(["Login failed:", xhr.status.toString(), xhr.statusText].join(' '));
             var newState = _this.copyState();
@@ -50,12 +49,21 @@ var MainComponent = (function (_super) {
     };
     return MainComponent;
 })(React.Component);
-function buildContent() {
-    return React.createElement(MainComponent, null);
+function buildMain() {
+    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-3"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(MainComponent, null)))));
+}
+function buildUser(userId) {
+    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("h1", {"className": "page-header"}, "User Workspace")), React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 sidebar", "id": "navigation"}, "Navigation stuff", React.createElement("ul", {"className": "nav nav-sidebar"}, React.createElement("li", {"className": "active"}, React.createElement("a", {"href": "#"}, "Overview ", React.createElement("span", {"className": "sr-only"}, "(current)"))), React.createElement("li", null, React.createElement("a", {"href": "#"}, "Reports")), React.createElement("li", null, React.createElement("a", {"href": "#"}, "Analytics")), React.createElement("li", null, React.createElement("a", {"href": "#"}, "Export")))), React.createElement("div", {"className": "col-xs-9", "id": "mainWorkspace"}, React.createElement("div", {"className": "table-responsive"}, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "#"), React.createElement("th", null, "Header"), React.createElement("th", null, "Header"), React.createElement("th", null, "Header"), React.createElement("th", null, "Header"))), React.createElement("tbody", null, React.createElement("tr", null, React.createElement("td", null, "1,001"), React.createElement("td", null, "Lorem"), React.createElement("td", null, "ipsum"), React.createElement("td", null, "dolor"), React.createElement("td", null, "sit")), React.createElement("tr", null, React.createElement("td", null, "1,002"), React.createElement("td", null, "amet"), React.createElement("td", null, "consectetur"), React.createElement("td", null, "adipiscing"), React.createElement("td", null, "elit")), React.createElement("tr", null, React.createElement("td", null, "1,003"), React.createElement("td", null, "Integer"), React.createElement("td", null, "nec"), React.createElement("td", null, "odio"), React.createElement("td", null, "Praesent")))))))));
+}
+function mountAndRender(contentId, element) {
+    var mount = document.getElementById(contentId);
+    React.render(element, mount);
 }
 function entry(contentId) {
-    var content = buildContent();
-    var mount = document.getElementById(contentId);
-    React.render(content, mount);
+    mountAndRender(contentId, buildMain());
 }
 exports.entry = entry;
+function user(contentId, userId) {
+    mountAndRender(contentId, buildUser(userId));
+}
+exports.user = user;

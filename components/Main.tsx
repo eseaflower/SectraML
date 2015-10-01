@@ -12,6 +12,7 @@ interface IMainState {
 
 interface IUser {
 	userId:number;
+	redirectUrl:string;
 }
 
 class MainComponent extends React.Component<{},IMainState> {
@@ -40,9 +41,8 @@ class MainComponent extends React.Component<{},IMainState> {
 	
 	private handleLogin():void {			
 		var handle = AjaxJson.postJson<IUser>("/login", {"username":this.state.username});
-		handle.done((data:IUser, status:string)=>{
-			alert("User id is " + data.userId.toString());
-			window.location.replace("http://www.na.se");
+		handle.done((data:IUser, status:string)=>{			
+			window.location.replace(data.redirectUrl);
 		}).fail((xhr:JQueryXHR, status:string, err:Error) => {			
 			alert(["Login failed:",xhr.status.toString(),xhr.statusText].join(' '));
 			var newState = this.copyState()
@@ -65,14 +65,83 @@ class MainComponent extends React.Component<{},IMainState> {
 	
 } 
 
-function buildContent() {
-	//var c = <test.LoginForm login_name="eseaflower@hotmail.com"/>
-	return <MainComponent/>;
+function buildMain():JSX.Element {	    
+	return (<div className="container">      
+      <div className="row">
+        <div className="col-xs-3 col-xs-offset-3">
+			<div className="page-header">
+				<h1>Sectra ML</h1>
+			</div>
+			<MainComponent/>
+		</div>
+	  </div>
+	</div>)
 }
 
+function buildUser(userId:number):JSX.Element {	
+  return (<div className="container">
+    <div className="row"><h1 className="page-header">User Workspace</h1></div>
+	  <div className="row">
+	  	<div className="col-xs-3 sidebar" id="navigation">
+			Navigation stuff
+       <ul className="nav nav-sidebar">
+            <li className="active"><a href="#">Overview <span className="sr-only">(current)</span></a></li>
+            <li><a href="#">Reports</a></li>
+            <li><a href="#">Analytics</a></li>
+            <li><a href="#">Export</a></li>
+          </ul>
+		</div>
+	  	<div className="col-xs-9" id="mainWorkspace">
+          <div className="table-responsive">
+            <table className="table table-striped">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Header</th>
+                  <th>Header</th>
+                  <th>Header</th>
+                  <th>Header</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1,001</td>
+                  <td>Lorem</td>
+                  <td>ipsum</td>
+                  <td>dolor</td>
+                  <td>sit</td>
+                </tr>
+                <tr>
+                  <td>1,002</td>
+                  <td>amet</td>
+                  <td>consectetur</td>
+                  <td>adipiscing</td>
+                  <td>elit</td>
+                </tr>
+                <tr>
+                  <td>1,003</td>
+                  <td>Integer</td>
+                  <td>nec</td>
+                  <td>odio</td>
+                  <td>Praesent</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+		</div>
+	  </div>
+    </div>)    		
+}
+
+function mountAndRender(contentId:string, element:JSX.Element) {	
+	var mount = document.getElementById(contentId);
+	React.render(element, mount);	
+}
 
 export function entry(contentId) {	
-	var content = buildContent();
-	var mount = document.getElementById(contentId);
-	React.render(content, mount);
+	mountAndRender(contentId, buildMain());
+}
+
+export function user(contentId:string, userId:number) {
+	mountAndRender(contentId, buildUser(userId));		
 }
