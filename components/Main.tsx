@@ -2,8 +2,8 @@
 /// <reference path="./TestComponent.tsx"/>
 import React=require("react");
 import test = require("./TestComponent");
-import jquery = require("jquery")
 import AjaxJson = require("./AjaxJson");
+import sidebar = require("./Sidebar");
 
 interface IMainState {
 	username:string;
@@ -78,20 +78,43 @@ function buildMain():JSX.Element {
 	</div>)
 }
 
+interface IUserMainState {		
+	navigationItems:sidebar.INavigationItemProps[];	
+	activeItem:number;
+}
+
+class UserMainComponent extends React.Component<{}, IUserMainState> {
+	constructor(props?:{}, context?:any) {
+		super(props, context);
+		this.state = {
+			navigationItems:[
+	  {id:0, name : "Overview",url:"#",active:true, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  {id:1,name : "Second",url:"#",active:false, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  {id:2,name : "Analytics",url:"#",active:false, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  {id:3,name : "Export",url:"#",active:false, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  ],
+	  activeItem:0
+		}		
+	}
+	private handleNavigationClick(item:sidebar.INavigationItemProps){
+		var newState = $.extend({}, this.state);
+		newState.navigationItems[newState.activeItem].active = false;
+		newState.navigationItems[item.id].active = true;
+		newState.activeItem=item.id;
+		this.setState(newState);
+	}
+	public render():JSX.Element {
+		return <sidebar.Sidebar items={this.state.navigationItems}/>
+	}
+}
+
+
 function buildUser(userId:number):JSX.Element {	
   return (<div className="container">
-    <div className="row"><h1 className="page-header">User Workspace</h1></div>
+      <div className="row"><h1 className="page-header">User Workspace</h1></div>
 	  <div className="row">
-	  	<div className="col-xs-3 sidebar" id="navigation">
-			Navigation stuff
-       <ul className="nav nav-sidebar">
-            <li className="active"><a href="#">Overview <span className="sr-only">(current)</span></a></li>
-            <li><a href="#">Reports</a></li>
-            <li><a href="#">Analytics</a></li>
-            <li><a href="#">Export</a></li>
-          </ul>
-		</div>
-	  	<div className="col-xs-9" id="mainWorkspace">
+		  <UserMainComponent/>	  		
+		  <div className="col-xs-10" id="mainWorkspace">
           <div className="table-responsive">
             <table className="table table-striped">
               <thead>

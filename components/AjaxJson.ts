@@ -1,5 +1,4 @@
 /// <reference path="../typings/tsd.d.ts"/>
-import jquery = require("jquery");
 
 export class AjaxHelper {
 	public post(url, data):JQueryXHR {
