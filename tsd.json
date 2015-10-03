@@ -10,6 +10,12 @@
     },
     "jquery/jquery.d.ts": {
       "commit": "32029fcb4e1a3ef8968711b545d77b584435729d"
+    },
+    "eventemitter3/eventemitter3.d.ts": {
+      "commit": "98d3168c2c570352a3a7393788e2ec9fbb08ade6"
+    },
+    "flux/flux.d.ts": {
+      "commit": "98d3168c2c570352a3a7393788e2ec9fbb08ade6"
     }
   }
 }

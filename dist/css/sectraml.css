@@ -20,3 +20,16 @@
   color: #fff;
   background-color: #428bca;
 }
+
+.alert-thin {
+  padding: 5px;
+  margin-bottom: 5px;  
+}
+
+.vertical-center {
+  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 100vh; /* These two lines are counted as one :-)       */
+
+  display: flex;
+  align-items: center;
+}

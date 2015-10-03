@@ -4,54 +4,33 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var React = require("react");
-var test = require("./TestComponent");
-var AjaxJson = require("./AjaxJson");
-var sidebar = require("./Sidebar");
+var Signin = require("./Signin");
+var Sidebar = require("./Sidebar");
+var Login = require("../stores/LoginStore");
 var MainComponent = (function (_super) {
     __extends(MainComponent, _super);
     function MainComponent(props, context) {
-        _super.call(this, props, context);
-        this.state = { username: "a@b", loginInProgress: false };
-    }
-    MainComponent.prototype.copyState = function () {
-        return {
-            username: this.state.username,
-            loginInProgress: this.state.loginInProgress
-        };
-    };
-    MainComponent.prototype.handleChange = function (value) {
-        var newState = this.copyState();
-        newState.username = value;
-        this.setState(newState);
-    };
-    MainComponent.prototype.onLoggedIn = function (data) {
-        var newState = this.copyState();
-        newState.loginInProgress = false;
-        this.setState(newState);
-    };
-    MainComponent.prototype.handleLogin = function () {
         var _this = this;
-        var handle = AjaxJson.postJson("/login", { "username": this.state.username });
-        handle.done(function (data, status) {
-            window.location.replace(data.redirectUrl);
-        }).fail(function (xhr, status, err) {
-            alert(["Login failed:", xhr.status.toString(), xhr.statusText].join(' '));
-            var newState = _this.copyState();
-            newState.loginInProgress = false;
-            _this.setState(newState);
-        });
-        var newState = this.copyState();
-        newState.loginInProgress = true;
-        this.setState(newState);
+        _super.call(this, props, context);
+        this.state = Login.Instance.getState();
+        this.changeEventHandler = function () { return _this.onStoreChange(); };
+    }
+    MainComponent.prototype.componentDidMount = function () {
+        Login.Instance.addChangeListener(this.changeEventHandler);
+    };
+    MainComponent.prototype.componentWillUnmount = function () {
+        Login.Instance.removeChangeListener(this.changeEventHandler);
+    };
+    MainComponent.prototype.onStoreChange = function () {
+        this.setState(Login.Instance.getState());
     };
     MainComponent.prototype.render = function () {
-        var _this = this;
-        return React.createElement(test.LoginForm, {"onChanged": function (value) { return _this.handleChange(value); }, "onLogin": function () { return _this.handleLogin(); }, "username": this.state.username, "loginInProgress": this.state.loginInProgress});
+        return React.createElement(Signin.LoginForm, {"username": this.state.username, "loginInProgress": this.state.loginInProgress, "error": this.state.error});
     };
     return MainComponent;
 })(React.Component);
 function buildMain() {
-    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-3"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(MainComponent, null)))));
+    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-4"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(MainComponent, null)))));
 }
 var UserMainComponent = (function (_super) {
     __extends(UserMainComponent, _super);
@@ -76,7 +55,7 @@ var UserMainComponent = (function (_super) {
         this.setState(newState);
     };
     UserMainComponent.prototype.render = function () {
-        return React.createElement(sidebar.Sidebar, {"items": this.state.navigationItems});
+        return React.createElement(Sidebar.Sidebar, {"items": this.state.navigationItems});
     };
     return UserMainComponent;
 })(React.Component);

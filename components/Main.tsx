@@ -1,66 +1,36 @@
 /// <reference path="../typings/tsd.d.ts"/>
-/// <reference path="./TestComponent.tsx"/>
 import React=require("react");
-import test = require("./TestComponent");
-import AjaxJson = require("./AjaxJson");
-import sidebar = require("./Sidebar");
+import Signin = require("./Signin");
+import Sidebar = require("./Sidebar");
+import Login = require("../stores/LoginStore")
 
-interface IMainState {
-	username:string;
-	loginInProgress:boolean;	
-}
-
-interface IUser {
-	userId:number;
-	redirectUrl:string;
-}
-
-class MainComponent extends React.Component<{},IMainState> {
+class MainComponent extends React.Component<{},Login.ILoginState> {
+	// Store the event handler instance!
+	private changeEventHandler:()=>void;
 	constructor(props?:{}, context?:any) {
 		super(props, context);
-		this.state = {username:"a@b", loginInProgress:false};		
-	}
-	private copyState():IMainState {
-		return {
-			username:this.state.username,
-			loginInProgress:this.state.loginInProgress			
-		}
+		this.state = Login.Instance.getState();		
+		this.changeEventHandler = () => this.onStoreChange();
 	}
 	
-	private handleChange(value:string):void {				
-		var newState = this.copyState();
-		newState.username = value;
-		this.setState(newState);
+	private componentDidMount() {
+		// Attach to store.
+		Login.Instance.addChangeListener(this.changeEventHandler);		
+	}
+	private componentWillUnmount() {
+		// Detach from store.
+		Login.Instance.removeChangeListener(this.changeEventHandler);
 	}
 	
-	private onLoggedIn(data:any) {
-		var newState = this.copyState();
-		newState.loginInProgress = false;
-		this.setState(newState);
-	}
-	
-	private handleLogin():void {			
-		var handle = AjaxJson.postJson<IUser>("/login", {"username":this.state.username});
-		handle.done((data:IUser, status:string)=>{			
-			window.location.replace(data.redirectUrl);
-		}).fail((xhr:JQueryXHR, status:string, err:Error) => {			
-			alert(["Login failed:",xhr.status.toString(),xhr.statusText].join(' '));
-			var newState = this.copyState()
-			newState.loginInProgress = false;
-			this.setState(newState);			
-		});
-		
-		var newState = this.copyState();
-		newState.loginInProgress = true;		
-		this.setState(newState);
-	}
-	
+	private onStoreChange() {
+		this.setState(Login.Instance.getState());
+	}		
+					
 	public render():JSX.Element {
-		return <test.LoginForm 
-		onChanged={(value:string) => this.handleChange(value)}
-		onLogin={() => this.handleLogin()}
+		return <Signin.LoginForm 
 		username={this.state.username}
-		loginInProgress={this.state.loginInProgress}/> 
+		loginInProgress={this.state.loginInProgress}
+		error={this.state.error}/> 
 	}
 	
 } 
@@ -68,7 +38,7 @@ class MainComponent extends React.Component<{},IMainState> {
 function buildMain():JSX.Element {	    
 	return (<div className="container">      
       <div className="row">
-        <div className="col-xs-3 col-xs-offset-3">
+        <div className="col-xs-3 col-xs-offset-4">
 			<div className="page-header">
 				<h1>Sectra ML</h1>
 			</div>
@@ -79,7 +49,7 @@ function buildMain():JSX.Element {
 }
 
 interface IUserMainState {		
-	navigationItems:sidebar.INavigationItemProps[];	
+	navigationItems:Sidebar.INavigationItemProps[];	
 	activeItem:number;
 }
 
@@ -88,15 +58,15 @@ class UserMainComponent extends React.Component<{}, IUserMainState> {
 		super(props, context);
 		this.state = {
 			navigationItems:[
-	  {id:0, name : "Overview",url:"#",active:true, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
-	  {id:1,name : "Second",url:"#",active:false, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
-	  {id:2,name : "Analytics",url:"#",active:false, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
-	  {id:3,name : "Export",url:"#",active:false, clickCallback:(p:sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  {id:0, name : "Overview",url:"#",active:true, clickCallback:(p:Sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  {id:1,name : "Second",url:"#",active:false, clickCallback:(p:Sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  {id:2,name : "Analytics",url:"#",active:false, clickCallback:(p:Sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
+	  {id:3,name : "Export",url:"#",active:false, clickCallback:(p:Sidebar.INavigationItemProps)=>this.handleNavigationClick(p)},
 	  ],
 	  activeItem:0
 		}		
 	}
-	private handleNavigationClick(item:sidebar.INavigationItemProps){
+	private handleNavigationClick(item:Sidebar.INavigationItemProps){
 		var newState = $.extend({}, this.state);
 		newState.navigationItems[newState.activeItem].active = false;
 		newState.navigationItems[item.id].active = true;
@@ -104,7 +74,7 @@ class UserMainComponent extends React.Component<{}, IUserMainState> {
 		this.setState(newState);
 	}
 	public render():JSX.Element {
-		return <sidebar.Sidebar items={this.state.navigationItems}/>
+		return <Sidebar.Sidebar items={this.state.navigationItems}/>
 	}
 }
 
