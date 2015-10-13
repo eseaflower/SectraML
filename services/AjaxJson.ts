@@ -8,6 +8,22 @@ export class AjaxHelper {
 	}
 }
 
+class FileUpload {
+	public upload(uploadUrl:string, file:File):JQueryXHR {
+		var formData = new FormData();
+		formData.append("datafile", file);		 
+		var deferredHandle = $.ajax({
+			url: uploadUrl,
+			data: formData,
+			contentType: false, // Needed to prevent jquery from messing with the data
+			processData: false, // Needed to prevent jquery from messing with the data
+			type: 'POST'
+    	});					
+		return deferredHandle;	
+	}
+}
+
+
 interface XHRDoneCallback<T> {
 	(data?:T, textStatus?:string, jqXHR?:JQueryXHR):void;
 }
@@ -47,4 +63,8 @@ export class TypedXHR<T> {
 
 export function postJson<T>(url, data):TypedXHR<T> {
 	return new TypedXHR<T>(new AjaxHelper().post(url, data));
+}
+
+export function uploadFile<T>(url:string, file:File) {
+	return new TypedXHR<T>(new FileUpload().upload(url, file));
 }

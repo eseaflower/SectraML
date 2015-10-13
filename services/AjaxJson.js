@@ -9,6 +9,23 @@ var AjaxHelper = (function () {
     return AjaxHelper;
 })();
 exports.AjaxHelper = AjaxHelper;
+var FileUpload = (function () {
+    function FileUpload() {
+    }
+    FileUpload.prototype.upload = function (uploadUrl, file) {
+        var formData = new FormData();
+        formData.append("datafile", file);
+        var deferredHandle = $.ajax({
+            url: uploadUrl,
+            data: formData,
+            contentType: false,
+            processData: false,
+            type: 'POST'
+        });
+        return deferredHandle;
+    };
+    return FileUpload;
+})();
 var TypedXHR = (function () {
     function TypedXHR(wrapped) {
         this.wrapped = wrapped;
@@ -38,3 +55,7 @@ function postJson(url, data) {
     return new TypedXHR(new AjaxHelper().post(url, data));
 }
 exports.postJson = postJson;
+function uploadFile(url, file) {
+    return new TypedXHR(new FileUpload().upload(url, file));
+}
+exports.uploadFile = uploadFile;

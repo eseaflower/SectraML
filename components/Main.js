@@ -4,33 +4,11 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var React = require("react");
-var Signin = require("./Signin");
+var Login = require("./Login");
 var Sidebar = require("./Sidebar");
-var Login = require("../stores/LoginStore");
-var MainComponent = (function (_super) {
-    __extends(MainComponent, _super);
-    function MainComponent(props, context) {
-        var _this = this;
-        _super.call(this, props, context);
-        this.state = Login.Instance.getState();
-        this.changeEventHandler = function () { return _this.onStoreChange(); };
-    }
-    MainComponent.prototype.componentDidMount = function () {
-        Login.Instance.addChangeListener(this.changeEventHandler);
-    };
-    MainComponent.prototype.componentWillUnmount = function () {
-        Login.Instance.removeChangeListener(this.changeEventHandler);
-    };
-    MainComponent.prototype.onStoreChange = function () {
-        this.setState(Login.Instance.getState());
-    };
-    MainComponent.prototype.render = function () {
-        return React.createElement(Signin.LoginForm, {"username": this.state.username, "loginInProgress": this.state.loginInProgress, "error": this.state.error});
-    };
-    return MainComponent;
-})(React.Component);
-function buildMain() {
-    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-4"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(MainComponent, null)))));
+var Experiment = require("./ExperimentController");
+function buildLogin() {
+    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-4"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(Login.LoginComponent, null)))));
 }
 var UserMainComponent = (function (_super) {
     __extends(UserMainComponent, _super);
@@ -55,21 +33,21 @@ var UserMainComponent = (function (_super) {
         this.setState(newState);
     };
     UserMainComponent.prototype.render = function () {
-        return React.createElement(Sidebar.Sidebar, {"items": this.state.navigationItems});
+        return (React.createElement("div", null, React.createElement(Sidebar.Sidebar, {"items": this.state.navigationItems}), React.createElement(Experiment.ExperimentController, null)));
     };
     return UserMainComponent;
 })(React.Component);
 function buildUser(userId) {
-    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("h1", {"className": "page-header"}, "User Workspace")), React.createElement("div", {"className": "row"}, React.createElement(UserMainComponent, null), React.createElement("div", {"className": "col-xs-10", "id": "mainWorkspace"}, React.createElement("div", {"className": "table-responsive"}, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, React.createElement("th", null, "#"), React.createElement("th", null, "Header"), React.createElement("th", null, "Header"), React.createElement("th", null, "Header"), React.createElement("th", null, "Header"))), React.createElement("tbody", null, React.createElement("tr", null, React.createElement("td", null, "1,001"), React.createElement("td", null, "Lorem"), React.createElement("td", null, "ipsum"), React.createElement("td", null, "dolor"), React.createElement("td", null, "sit")), React.createElement("tr", null, React.createElement("td", null, "1,002"), React.createElement("td", null, "amet"), React.createElement("td", null, "consectetur"), React.createElement("td", null, "adipiscing"), React.createElement("td", null, "elit")), React.createElement("tr", null, React.createElement("td", null, "1,003"), React.createElement("td", null, "Integer"), React.createElement("td", null, "nec"), React.createElement("td", null, "odio"), React.createElement("td", null, "Praesent")))))))));
+    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("h1", {"className": "page-header"}, "User Workspace")), React.createElement("div", {"className": "row"}, React.createElement(UserMainComponent, null))));
 }
 function mountAndRender(contentId, element) {
     var mount = document.getElementById(contentId);
     React.render(element, mount);
 }
-function entry(contentId) {
-    mountAndRender(contentId, buildMain());
+function login(contentId) {
+    mountAndRender(contentId, buildLogin());
 }
-exports.entry = entry;
+exports.login = login;
 function user(contentId, userId) {
     mountAndRender(contentId, buildUser(userId));
 }

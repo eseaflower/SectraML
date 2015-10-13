@@ -5,9 +5,6 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Base = require('./BaseStore');
 var Actions = require('../actions/actions');
-exports.Events = {
-    Change: "Change"
-};
 var LoginStore = (function (_super) {
     __extends(LoginStore, _super);
     function LoginStore() {
@@ -22,25 +19,19 @@ var LoginStore = (function (_super) {
     LoginStore.prototype.getState = function () {
         return $.extend({}, this.state);
     };
-    LoginStore.prototype.addChangeListener = function (callback) {
-        this.on(exports.Events.Change, callback);
-    };
-    LoginStore.prototype.removeChangeListener = function (callback) {
-        this.removeListener(exports.Events.Change, callback);
-    };
     LoginStore.prototype.usernameUpdated = function (value) {
         this.state.username = value;
-        this.emit(exports.Events.Change);
+        this.emitChange();
     };
     LoginStore.prototype.commitLogin = function () {
         Actions.Login.PerformLogin("/login", this.state.username);
         this.state.loginInProgress = true;
-        this.emit(exports.Events.Change);
+        this.emitChange();
     };
     LoginStore.prototype.loginFailed = function (message) {
         this.state.error = message;
         this.state.loginInProgress = false;
-        this.emit(exports.Events.Change);
+        this.emitChange();
     };
     LoginStore.prototype.loginSucceded = function (data) {
         window.location.replace(data.redirectUrl);

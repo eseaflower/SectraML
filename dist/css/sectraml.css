@@ -33,3 +33,7 @@
   display: flex;
   align-items: center;
 }
+
+.wide {
+  width: 500px;
+}

@@ -1,5 +1,6 @@
 /// <reference path="../typings/tsd.d.ts"/>
 import React=require("react");
+import Login = require("../stores/LoginStore")
 import Actions = require("../actions/actions")
 
 export interface ILoginFormProps {
@@ -38,3 +39,34 @@ export class LoginForm extends React.Component<ILoginFormProps, {}> {
 		);
 	}		
 }
+
+export class LoginComponent extends React.Component<{},Login.ILoginState> {
+	// Store the event handler instance!
+	private changeEventHandler:()=>void;
+	constructor(props?:{}, context?:any) {
+		super(props, context);
+		this.state = Login.Instance.getState();		
+		this.changeEventHandler = () => this.onStoreChange();
+	}
+	
+	private componentDidMount() {
+		// Attach to store.
+		Login.Instance.addChangeListener(this.changeEventHandler);		
+	}
+	private componentWillUnmount() {
+		// Detach from store.
+		Login.Instance.removeChangeListener(this.changeEventHandler);
+	}
+	
+	private onStoreChange() {
+		this.setState(Login.Instance.getState());
+	}		
+					
+	public render():JSX.Element {
+		return <LoginForm 
+		username={this.state.username}
+		loginInProgress={this.state.loginInProgress}
+		error={this.state.error}/> 
+	}
+	
+} 

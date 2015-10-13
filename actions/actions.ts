@@ -44,3 +44,38 @@ class _Login {
 	}	
 }
 export var Login = new _Login();
+
+
+export interface IUploadData {
+	Columns:string[];
+	Rows:string[][];
+}
+
+class _Upload {
+	public UPLOAD_COMMITED:string;
+	public UPLOAD_COMPLETE:string;
+	public UPLOAD_FAILED:string;
+	constructor() {
+		this.UPLOAD_COMMITED = "UPLOAD_COMMITED";		
+		this.UPLOAD_COMPLETE = "UPLOAD_COMPLETE";
+		this.UPLOAD_FAILED = "UPLOAD_FAILED";	
+	}
+	public ComitUpload(file:File){
+		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_COMMITED, data:file});
+	}
+	private UploadComplete(data:IUploadData) {
+		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_COMPLETE, data:data});
+	}
+	private UploadFailed(message:string){
+		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_FAILED, data:message});	
+	} 
+	public PerformUpload(file:File) {
+		Ajax.uploadFile<IUploadData>("/upload", file).
+		done((data)=>this.UploadComplete(data)).
+		fail((xhr:JQueryXHR, status:string, err:Error) => {
+			var message = ["Upload failed:",xhr.status.toString(),xhr.statusText].join(' ');				
+			this.UploadFailed(message);	
+		});
+	}
+}
+export var Upload = new _Upload()

@@ -8,9 +8,6 @@ export interface ILoginState {
 	error:string;	
 }
 
-export var Events = {
-	Change : "Change"
-};
 
 export class LoginStore extends Base.BaseStore {
 	private state:ILoginState;
@@ -26,30 +23,23 @@ export class LoginStore extends Base.BaseStore {
 	public getState():ILoginState {		
 		return $.extend({}, this.state); 		
 	}
-	
-	public addChangeListener(callback:()=>void) {
-		this.on(Events.Change, callback);
-	}
-	public removeChangeListener(callback:()=>void) {
-		this.removeListener(Events.Change, callback);
-	}
-	
+		
 	private usernameUpdated(value:string) {
 		this.state.username = value;
-		this.emit(Events.Change);
+		this.emitChange();
 	}
 	
 	private commitLogin() {		
 		Actions.Login.PerformLogin("/login", this.state.username);
 		this.state.loginInProgress = true;		
-		this.emit(Events.Change);
+		this.emitChange();
 	}
 		
 	private loginFailed(message:string) {
 		//alert(message);
 		this.state.error = message;
 		this.state.loginInProgress = false;
-		this.emit(Events.Change);
+		this.emitChange();
 	}		
 	private loginSucceded(data:Actions.ILoginData) {
 		window.location.replace(data.redirectUrl);

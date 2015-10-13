@@ -34,3 +34,30 @@ var _Login = (function () {
     return _Login;
 })();
 exports.Login = new _Login();
+var _Upload = (function () {
+    function _Upload() {
+        this.UPLOAD_COMMITED = "UPLOAD_COMMITED";
+        this.UPLOAD_COMPLETE = "UPLOAD_COMPLETE";
+        this.UPLOAD_FAILED = "UPLOAD_FAILED";
+    }
+    _Upload.prototype.ComitUpload = function (file) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_COMMITED, data: file });
+    };
+    _Upload.prototype.UploadComplete = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_COMPLETE, data: data });
+    };
+    _Upload.prototype.UploadFailed = function (message) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_FAILED, data: message });
+    };
+    _Upload.prototype.PerformUpload = function (file) {
+        var _this = this;
+        Ajax.uploadFile("/upload", file).
+            done(function (data) { return _this.UploadComplete(data); }).
+            fail(function (xhr, status, err) {
+            var message = ["Upload failed:", xhr.status.toString(), xhr.statusText].join(' ');
+            _this.UploadFailed(message);
+        });
+    };
+    return _Upload;
+})();
+exports.Upload = new _Upload();

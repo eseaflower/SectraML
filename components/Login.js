@@ -4,6 +4,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var React = require("react");
+var Login = require("../stores/LoginStore");
 var Actions = require("../actions/actions");
 var LoginForm = (function (_super) {
     __extends(LoginForm, _super);
@@ -27,3 +28,26 @@ var LoginForm = (function (_super) {
     return LoginForm;
 })(React.Component);
 exports.LoginForm = LoginForm;
+var LoginComponent = (function (_super) {
+    __extends(LoginComponent, _super);
+    function LoginComponent(props, context) {
+        var _this = this;
+        _super.call(this, props, context);
+        this.state = Login.Instance.getState();
+        this.changeEventHandler = function () { return _this.onStoreChange(); };
+    }
+    LoginComponent.prototype.componentDidMount = function () {
+        Login.Instance.addChangeListener(this.changeEventHandler);
+    };
+    LoginComponent.prototype.componentWillUnmount = function () {
+        Login.Instance.removeChangeListener(this.changeEventHandler);
+    };
+    LoginComponent.prototype.onStoreChange = function () {
+        this.setState(Login.Instance.getState());
+    };
+    LoginComponent.prototype.render = function () {
+        return React.createElement(LoginForm, {"username": this.state.username, "loginInProgress": this.state.loginInProgress, "error": this.state.error});
+    };
+    return LoginComponent;
+})(React.Component);
+exports.LoginComponent = LoginComponent;
