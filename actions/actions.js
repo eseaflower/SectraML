@@ -40,7 +40,7 @@ var _Upload = (function () {
         this.UPLOAD_COMPLETE = "UPLOAD_COMPLETE";
         this.UPLOAD_FAILED = "UPLOAD_FAILED";
     }
-    _Upload.prototype.ComitUpload = function (file) {
+    _Upload.prototype.CommitUpload = function (file) {
         AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_COMMITED, data: file });
     };
     _Upload.prototype.UploadComplete = function (data) {

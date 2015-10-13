@@ -13,7 +13,7 @@ var Experiment = (function (_super) {
     Experiment.prototype.handleUpload = function () {
         var htmlComponent = this.refs["filename"];
         var value = htmlComponent.getDOMNode().files[0];
-        Actions.Upload.ComitUpload(value);
+        Actions.Upload.CommitUpload(value);
     };
     Experiment.prototype.getUploadComponents = function () {
         var _this = this;

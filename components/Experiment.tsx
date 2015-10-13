@@ -12,7 +12,7 @@ export class Experiment extends React.Component<IExperimentProps, {}> {
 	private handleUpload() {
 		var htmlComponent = this.refs["filename"] as React.ClassicComponent<any, any>;
 		var value = htmlComponent.getDOMNode<HTMLInputElement>().files[0];		
-		Actions.Upload.ComitUpload(value)
+		Actions.Upload.CommitUpload(value)
 	}
 
 	private getUploadComponents():JSX.Element {

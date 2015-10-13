@@ -60,7 +60,7 @@ class _Upload {
 		this.UPLOAD_COMPLETE = "UPLOAD_COMPLETE";
 		this.UPLOAD_FAILED = "UPLOAD_FAILED";	
 	}
-	public ComitUpload(file:File){
+	public CommitUpload(file:File){
 		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_COMMITED, data:file});
 	}
 	private UploadComplete(data:IUploadData) {

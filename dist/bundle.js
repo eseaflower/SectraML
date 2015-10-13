@@ -41,7 +41,7 @@ var _Upload = (function () {
         this.UPLOAD_COMPLETE = "UPLOAD_COMPLETE";
         this.UPLOAD_FAILED = "UPLOAD_FAILED";
     }
-    _Upload.prototype.ComitUpload = function (file) {
+    _Upload.prototype.CommitUpload = function (file) {
         AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_COMMITED, data: file });
     };
     _Upload.prototype.UploadComplete = function (data) {
@@ -79,7 +79,7 @@ var Experiment = (function (_super) {
     Experiment.prototype.handleUpload = function () {
         var htmlComponent = this.refs["filename"];
         var value = htmlComponent.getDOMNode().files[0];
-        Actions.Upload.ComitUpload(value);
+        Actions.Upload.CommitUpload(value);
     };
     Experiment.prototype.getUploadComponents = function () {
         var _this = this;
