@@ -11,56 +11,65 @@ var ExperimentStore = (function (_super) {
     function ExperimentStore() {
         var _this = this;
         _super.call(this);
-        this.state = { Columns: null, Rows: null, Message: null, DataTypes: null };
-        this.dataTypesUploadUrl = null;
+        this.state = { examples: null, message: null, datatypes: null, availableTypes: null };
+        this.experimentUrl = null;
+        this.fileUploadUrl = null;
         this.dispatcher.register(Actions.Upload.UPLOAD_COMMITED, function (_) { return _this.commitUpload(_); });
         this.dispatcher.register(Actions.Upload.UPLOAD_COMPLETE, function (_) { return _this.uploadCompleted(_); });
         this.dispatcher.register(Actions.Upload.UPLOAD_FAILED, function (_) { return _this.uploadFailed(_); });
-        this.dispatcher.register(Actions.Experiment.DATATYPES_COMMITED, function (_) { return _this.commitUploadDataTypes(_); });
+        this.dispatcher.register(Actions.Experiment.DATATYPES_COMMITED, function () { return _this.commitUploadDataTypes(); });
         this.dispatcher.register(Actions.Experiment.UPLOAD_DATATYPES_COMPLETE, function (_) { return _this.uploadDataTypesCompleted(_); });
         this.dispatcher.register(Actions.Experiment.UPLOAD_DATATYPES_FAILED, function (_) { return _this.uploadDataTypesFailed(_); });
         this.dispatcher.register(Actions.User.USER_ID_SET, function (_) { return _this.userChanged(_); });
+        this.dispatcher.register(Actions.Experiment.DATATYPES_CHANGED, function (_) { return _this.datatypesChanged(_); });
     }
     ExperimentStore.prototype.getState = function () {
         return $.extend({}, this.state);
     };
     ExperimentStore.prototype.commitUpload = function (file) {
-        Actions.Upload.PerformUpload(file);
-        this.state.Columns = null;
-        this.state.Message = "Uploading...";
-        this.emitChange();
+        if (this.fileUploadUrl != null) {
+            Actions.Upload.PerformUpload(this.fileUploadUrl, file);
+            this.state.message = "Uploading...";
+            this.emitChange();
+        }
     };
     ExperimentStore.prototype.uploadCompleted = function (data) {
-        this.state.Columns = data.Columns;
-        this.state.Rows = data.Rows;
-        this.state.Message = null;
+        this.state.examples = data.rows;
+        this.state.datatypes = data.columns.map(function (column) { return { column: column, datatype: data.availableTypes[0] }; });
+        this.state.availableTypes = data.availableTypes;
+        this.experimentUrl = "/experiment/" + data.id.toString();
+        this.state.message = null;
         this.emitChange();
     };
     ExperimentStore.prototype.uploadFailed = function (message) {
-        this.state.Columns = null;
-        this.state.Message = message;
+        this.state.message = message;
         this.emitChange();
     };
-    ExperimentStore.prototype.commitUploadDataTypes = function (data) {
-        if (this.dataTypesUploadUrl != null) {
-            Actions.Experiment.UploadDatatypes(this.dataTypesUploadUrl, data);
+    ExperimentStore.prototype.commitUploadDataTypes = function () {
+        if (this.experimentUrl != null) {
+            Actions.Experiment.UploadDatatypes(this.experimentUrl, this.state.datatypes);
         }
     };
     ExperimentStore.prototype.uploadDataTypesCompleted = function (data) {
-        this.state.DataTypes = data;
+        this.state.datatypes = data;
         this.emitChange();
     };
     ExperimentStore.prototype.uploadDataTypesFailed = function (message) {
-        this.state.Message = message;
+        this.state.message = message;
         this.emitChange();
     };
     ExperimentStore.prototype.userChanged = function (userId) {
         this.waitFor(User.Instance);
         var userId = User.Instance.getState().UserId;
-        this.dataTypesUploadUrl = null;
+        this.fileUploadUrl = null;
         if (userId != null) {
-            this.dataTypesUploadUrl = "/user/" + userId + "/datatypes";
+            this.fileUploadUrl = userId + "/upload";
+            this.emitChange();
         }
+    };
+    ExperimentStore.prototype.datatypesChanged = function (data) {
+        this.state.datatypes = this.state.datatypes.map(function (dt) { return (dt.column == data.column) ? data : dt; });
+        this.emitChange();
     };
     return ExperimentStore;
 })(Base.BaseStore);

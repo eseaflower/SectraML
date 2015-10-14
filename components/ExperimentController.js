@@ -5,7 +5,6 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 var ExperimentStore = require("../stores/ExperimentStore");
-var UserStore = require("../stores/UserStore");
 var ExperimentComponent = require("./Experiment");
 var ExperimentController = (function (_super) {
     __extends(ExperimentController, _super);
@@ -13,20 +12,32 @@ var ExperimentController = (function (_super) {
         var _this = this;
         _super.call(this, props, context);
         this.state = this.buildState();
-        ExperimentStore.Instance.addChangeListener(function () { return _this.onChange(); });
+        this.changeEventHandler = function () { return _this.onChange(); };
     }
+    ExperimentController.prototype.componentDidMount = function () {
+        ExperimentStore.Instance.addChangeListener(this.changeEventHandler);
+    };
+    ExperimentController.prototype.componentWillUnmount = function () {
+        ExperimentStore.Instance.removeChangeListener(this.changeEventHandler);
+    };
     ExperimentController.prototype.buildState = function () {
+        var experimentData = ExperimentStore.Instance.getState();
         return {
-            Experiment: ExperimentStore.Instance.getState(),
-            User: UserStore.Instance.getState()
+            message: experimentData.message,
+            mapperProps: {
+                availableTypes: experimentData.availableTypes,
+                examples: experimentData.examples,
+                datatypes: experimentData.datatypes
+            }
         };
     };
     ExperimentController.prototype.onChange = function () {
         this.setState(this.buildState());
     };
     ExperimentController.prototype.render = function () {
-        var alertElement = this.state.Experiment.Message != null ? React.createElement("div", {"className": "alert"}, this.state.Experiment.Message) : null;
-        return (React.createElement("div", null, alertElement, React.createElement(ExperimentComponent.Experiment, {"Columns": this.state.Experiment.Columns, "Rows": this.state.Experiment.Rows})));
+        var alertElement = this.state.message != null ? React.createElement("div", {"className": "alert"}, this.state.message) : null;
+        var showUpload = this.state.mapperProps.datatypes == null;
+        return (React.createElement("div", null, alertElement, React.createElement(ExperimentComponent.Experiment, {"showUpload": showUpload, "datatypeProps": this.state.mapperProps})));
     };
     return ExperimentController;
 })(React.Component);

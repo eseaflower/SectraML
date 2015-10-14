@@ -4,27 +4,29 @@ import Actions = require('../actions/actions')
 import User = require("./UserStore")
 
 export interface IExperimentStoreState {
-	Columns:string[];
-	Rows:string[][];
-	Message:string;
-	DataTypes:Actions.IDataType[];
+	examples:string[][];
+	message:string;
+	datatypes:Actions.IDataType[];
+	availableTypes:string[];
 }
 
 export class ExperimentStore extends Base.BaseStore {
 	private state:IExperimentStoreState;
-	private dataTypesUploadUrl:string;
+	private experimentUrl:string;
+	private fileUploadUrl:string
 	constructor() {
 		super();
-		this.state = {Columns:null, Rows: null, Message:null, DataTypes:null};
-		this.dataTypesUploadUrl = null;
+		this.state = {examples: null, message:null, datatypes:null, availableTypes:null};
+		this.experimentUrl = null;
+		this.fileUploadUrl = null;
 		this.dispatcher.register<File>(Actions.Upload.UPLOAD_COMMITED,(_)=>this.commitUpload(_));	
 		this.dispatcher.register<Actions.IUploadData>(Actions.Upload.UPLOAD_COMPLETE, (_)=>this.uploadCompleted(_));	
 		this.dispatcher.register<string>(Actions.Upload.UPLOAD_FAILED, (_)=>this.uploadFailed(_));
-		this.dispatcher.register<Actions.IDataType[]>(Actions.Experiment.DATATYPES_COMMITED, (_)=>this.commitUploadDataTypes(_));
+		this.dispatcher.register(Actions.Experiment.DATATYPES_COMMITED, ()=>this.commitUploadDataTypes());
 		this.dispatcher.register<Actions.IDataType[]>(Actions.Experiment.UPLOAD_DATATYPES_COMPLETE, (_)=>this.uploadDataTypesCompleted(_));
 		this.dispatcher.register<string>(Actions.Experiment.UPLOAD_DATATYPES_FAILED, (_)=>this.uploadDataTypesFailed(_));			
 		this.dispatcher.register<string>(Actions.User.USER_ID_SET, (_)=>this.userChanged(_));
-			
+		this.dispatcher.register<Actions.IDataType>(Actions.Experiment.DATATYPES_CHANGED, (_)=>this.datatypesChanged(_));
 	}	
 	
 	public getState():IExperimentStoreState {		
@@ -32,34 +34,36 @@ export class ExperimentStore extends Base.BaseStore {
 	}
 			
 	private commitUpload(file:File) {
-		Actions.Upload.PerformUpload(file);
-		this.state.Columns = null;
-		this.state.Message = "Uploading...";
-		this.emitChange();		
+		if (this.fileUploadUrl != null){
+			Actions.Upload.PerformUpload(this.fileUploadUrl, file);
+			this.state.message = "Uploading...";
+			this.emitChange();		
+		}
 	}
-	private uploadCompleted(data:Actions.IUploadData) {
-		this.state.Columns = data.Columns;
-		this.state.Rows = data.Rows;
-		this.state.Message = null;
+	private uploadCompleted(data:Actions.IUploadData) {		
+		this.state.examples = data.rows;
+		this.state.datatypes = data.columns.map(column => {return {column:column, datatype:data.availableTypes[0]}});
+		this.state.availableTypes = data.availableTypes;
+		this.experimentUrl = "/experiment/" + data.id.toString();
+		this.state.message = null;
 		this.emitChange();
 	}
-	private uploadFailed(message:string) {
-		this.state.Columns = null;
-		this.state.Message = message;
+	private uploadFailed(message:string) {		
+		this.state.message = message;
 		this.emitChange();
 	}
-	private commitUploadDataTypes(data:Actions.IDataType[]) {
-		if (this.dataTypesUploadUrl != null) {
-			Actions.Experiment.UploadDatatypes(this.dataTypesUploadUrl, data);
+	private commitUploadDataTypes() {
+		if (this.experimentUrl != null) {
+			Actions.Experiment.UploadDatatypes(this.experimentUrl, this.state.datatypes);
 		}
 	}
 	
 	private uploadDataTypesCompleted(data:Actions.IDataType[]) {
-		this.state.DataTypes = data;
+		this.state.datatypes = data;
 		this.emitChange();
 	}
 	private uploadDataTypesFailed(message:string) {
-		this.state.Message = message;
+		this.state.message = message;
 		this.emitChange();	
 	}	
 	
@@ -68,11 +72,18 @@ export class ExperimentStore extends Base.BaseStore {
 		this.waitFor(User.Instance);
 				
 		var userId = User.Instance.getState().UserId;
-		this.dataTypesUploadUrl = null;
+		this.fileUploadUrl = null;
 		if (userId != null) {
-			this.dataTypesUploadUrl = "/user/" + userId + "/datatypes";
+			this.fileUploadUrl = userId + "/upload";
+			this.emitChange();
 		}	
 	}
+	private datatypesChanged(data:Actions.IDataType) {
+		// Copy all but the changed data mapping
+		this.state.datatypes = this.state.datatypes.map(dt => (dt.column == data.column)?data:dt);
+		this.emitChange();	
+	}
+	
 }
 
 export var Instance = new ExperimentStore();

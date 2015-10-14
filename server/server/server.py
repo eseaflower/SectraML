@@ -4,7 +4,7 @@ import tornado.web
 import os.path
 import json
 from serverutil import jsonarg, jsonreturn, jsonmethod, ServerException, toJsArgs
-from experiment import getDataDescription
+from experiment import createExperiment
 import time
 
 
@@ -49,16 +49,17 @@ class UploadHandler(tornado.web.RequestHandler):
             f.write(data)
 
     @jsonreturn
-    def post(self):
+    def post(self, userId):
         fileinfo = self.request.files['datafile'][0]
         filename = "tmp.dat"
         self.saveFile(filename, fileinfo.body)
-        return getDataDescription(self.getUploadFilename(filename))
+        return createExperiment(self.getUploadFilename(filename), userId)
                                            
 
-class DataTypeHandler(tornado.web.RequestHandler):
+class ExperimentHandler(tornado.web.RequestHandler):
     @jsonmethod
-    def post(self, userId, args):
+    def post(self, experimentId, args):
+        print("Experiment {0}".format(experimentId))
         for desc in args:
             print(desc)
         return args
@@ -71,8 +72,8 @@ if __name__ == "__main__":
     tornado.web.Application([                
         tornado.web.url("/login", LoginHandler),
         tornado.web.url("/user/([0-9]+)", UserHandler),
-        tornado.web.url("/upload", UploadHandler, {"uploadRoot":uploadPath}),
-        tornado.web.url("/user/([0-9]+)/datatypes", DataTypeHandler),
+        tornado.web.url("/user/([0-9]+)/upload", UploadHandler, {"uploadRoot":uploadPath}),
+        tornado.web.url("/experiment/([0-9]+)", ExperimentHandler),
         tornado.web.url("/", MainHandler),
         tornado.web.url(r"/(.*)", tornado.web.StaticFileHandler, {"path":dist_path}),
         ],

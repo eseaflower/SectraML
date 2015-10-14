@@ -47,8 +47,10 @@ export var Login = new _Login();
 
 
 export interface IUploadData {
-	Columns:string[];
-	Rows:string[][];
+	id:number;
+	columns:string[];
+	rows:string[][];
+	availableTypes:string[];	
 }
 
 class _Upload {
@@ -69,8 +71,8 @@ class _Upload {
 	private UploadFailed(message:string){
 		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_FAILED, data:message});	
 	} 
-	public PerformUpload(file:File) {
-		Ajax.uploadFile<IUploadData>("/upload", file).
+	public PerformUpload(url:string, file:File) {
+		Ajax.uploadFile<IUploadData>(url, file).
 		done((data)=>this.UploadComplete(data)).
 		fail((xhr:JQueryXHR, status:string, err:Error) => {
 			var message = ["Upload failed:",xhr.status.toString(),xhr.statusText].join(' ');				
@@ -81,21 +83,23 @@ class _Upload {
 export var Upload = new _Upload()
 
 export interface IDataType {
-	Column:string;
-	Datatype:string;
+	column:string;
+	datatype:string;
 }
 
-class _Experiment {
+class _Experiment {	
 	public DATATYPES_COMMITED:string;
 	public UPLOAD_DATATYPES_COMPLETE:string;
 	public UPLOAD_DATATYPES_FAILED:string;
+	public DATATYPES_CHANGED:string;
 	constructor() {
 		this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
 		this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
 		this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
+		this.DATATYPES_CHANGED = "DATATYPES_CHANGED";
 	}	
-	public CommitDatatypes(data:IDataType[]) {
-		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_COMMITED, data:data});
+	public CommitDatatypes() {
+		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_COMMITED, data:null});
 	}
 	
 	private UploadDataTypesComplete(data:IDataType[]){
@@ -111,6 +115,9 @@ class _Experiment {
 			var message = ["Upload datatypes failed:",xhr.status.toString(),xhr.statusText].join(' ');				
 			this.UploadDataTypesFailed(message);	
 		});
+	}
+	public DatatypeChanged(data:IDataType) {
+		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_CHANGED, data:data});
 	}
 }
 

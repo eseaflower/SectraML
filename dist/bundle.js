@@ -50,9 +50,9 @@ var _Upload = (function () {
     _Upload.prototype.UploadFailed = function (message) {
         AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_FAILED, data: message });
     };
-    _Upload.prototype.PerformUpload = function (file) {
+    _Upload.prototype.PerformUpload = function (url, file) {
         var _this = this;
-        Ajax.uploadFile("/upload", file).
+        Ajax.uploadFile(url, file).
             done(function (data) { return _this.UploadComplete(data); }).
             fail(function (xhr, status, err) {
             var message = ["Upload failed:", xhr.status.toString(), xhr.statusText].join(' ');
@@ -67,9 +67,10 @@ var _Experiment = (function () {
         this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
         this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
         this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
+        this.DATATYPES_CHANGED = "DATATYPES_CHANGED";
     }
-    _Experiment.prototype.CommitDatatypes = function (data) {
-        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: data });
+    _Experiment.prototype.CommitDatatypes = function () {
+        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: null });
     };
     _Experiment.prototype.UploadDataTypesComplete = function (data) {
         AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_DATATYPES_COMPLETE, data: data });
@@ -85,6 +86,9 @@ var _Experiment = (function () {
             var message = ["Upload datatypes failed:", xhr.status.toString(), xhr.statusText].join(' ');
             _this.UploadDataTypesFailed(message);
         });
+    };
+    _Experiment.prototype.DatatypeChanged = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_CHANGED, data: data });
     };
     return _Experiment;
 })();
@@ -108,46 +112,79 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 var Actions = require("../actions/actions");
+var FileUploadComponent = (function (_super) {
+    __extends(FileUploadComponent, _super);
+    function FileUploadComponent() {
+        _super.apply(this, arguments);
+    }
+    FileUploadComponent.prototype.handleUpload = function () {
+        var htmlComponent = this.refs["filename"];
+        var value = htmlComponent.getDOMNode().files[0];
+        Actions.Upload.CommitUpload(value);
+    };
+    FileUploadComponent.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", null, React.createElement("label", null, "Data file"), React.createElement("input", {"className": "wide", "ref": "filename", "type": "file"}), React.createElement("input", {"value": "Upload...", "type": "button", "onClick": function () { return _this.handleUpload(); }})));
+    };
+    return FileUploadComponent;
+})(React.Component);
+var DatatypeMapper = (function (_super) {
+    __extends(DatatypeMapper, _super);
+    function DatatypeMapper() {
+        _super.apply(this, arguments);
+    }
+    DatatypeMapper.prototype.getColumnHeaders = function () {
+        return this.props.datatypes.map(function (dt) { return React.createElement("th", null, dt.column); });
+    };
+    DatatypeMapper.prototype.getOptions = function () {
+        return this.props.availableTypes.map(function (type) { return React.createElement("option", {"value": type}, type); });
+    };
+    DatatypeMapper.prototype.getSelectRefName = function (column) {
+        return column + "_ref";
+    };
+    DatatypeMapper.prototype.valueChanged = function (column) {
+        var refId = this.getSelectRefName(column);
+        var component = this.refs[refId];
+        var datatype = component.getDOMNode().value;
+        Actions.Experiment.DatatypeChanged({ column: column, datatype: datatype });
+    };
+    DatatypeMapper.prototype.getDatatypeSelect = function (dt) {
+        var _this = this;
+        return (React.createElement("select", {"onChange": function () { return _this.valueChanged(dt.column); }, "ref": this.getSelectRefName(dt.column), "value": dt.datatype}, this.getOptions()));
+    };
+    DatatypeMapper.prototype.getColumnDatatypes = function () {
+        var _this = this;
+        return this.props.datatypes.map(function (dt) { return React.createElement("td", null, _this.getDatatypeSelect(dt)); });
+    };
+    DatatypeMapper.prototype.getExampleRow = function (row) {
+        return React.createElement("tr", null, row.map(function (value) { return React.createElement("td", null, value); }));
+    };
+    DatatypeMapper.prototype.getExamples = function () {
+        var _this = this;
+        return this.props.examples.map(function (row) { return _this.getExampleRow(row); });
+    };
+    DatatypeMapper.prototype.render = function () {
+        return (React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, this.getColumnHeaders()), React.createElement("tr", null, this.getColumnDatatypes())), React.createElement("tbody", null, this.getExamples())));
+    };
+    return DatatypeMapper;
+})(React.Component);
 var Experiment = (function (_super) {
     __extends(Experiment, _super);
     function Experiment() {
         _super.apply(this, arguments);
     }
-    Experiment.prototype.handleUpload = function () {
-        var htmlComponent = this.refs["filename"];
-        var value = htmlComponent.getDOMNode().files[0];
-        Actions.Upload.CommitUpload(value);
-    };
     Experiment.prototype.handleCreateMapper = function () {
+        Actions.Experiment.CommitDatatypes();
+    };
+    Experiment.prototype.getElement = function () {
         var _this = this;
-        var columnDesc = this.props.Columns.map(function (item) {
-            var refId = _this.getSelectRefName(item);
-            var component = _this.refs[refId];
-            var dataType = component.getDOMNode().value;
-            return { Column: item, Datatype: dataType };
-        });
-        Actions.Experiment.CommitDatatypes(columnDesc);
-    };
-    Experiment.prototype.getUploadComponents = function () {
-        var _this = this;
-        return (React.createElement("div", null, React.createElement("label", null, "Data file"), React.createElement("input", {"className": "wide", "ref": "filename", "type": "file"}), React.createElement("input", {"value": "Upload...", "type": "button", "onClick": function () { return _this.handleUpload(); }})));
-    };
-    Experiment.prototype.getSelectRefName = function (name) {
-        return name + "_ref";
-    };
-    Experiment.prototype.getDataTypeSelect = function (name) {
-        return (React.createElement("select", {"ref": this.getSelectRefName(name)}, React.createElement("option", {"value": "Ignore"}, "Ignore"), React.createElement("option", {"value": "BagOfItems"}, "Bag of items"), React.createElement("option", {"value": "Raw"}, "Raw"), React.createElement("option", {"value": "Label"}, "Label")));
-    };
-    Experiment.prototype.getTableComponents = function () {
-        var _this = this;
-        var columnHeaderNames = this.props.Columns.map(function (name) { return React.createElement("th", null, name); });
-        var columnHeaderTypes = this.props.Columns.map(function (name) { return React.createElement("th", null, _this.getDataTypeSelect(name)); });
-        var examples = this.props.Rows.map(function (row) { return React.createElement("tr", null, row.map(function (item) { return React.createElement("td", null, item); })); });
-        return (React.createElement("div", {"className": "table-responsive"}, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, columnHeaderNames), React.createElement("tr", null, columnHeaderTypes)), React.createElement("tbody", null, examples)), React.createElement("input", {"type": "button", "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
+        if (this.props.showUpload) {
+            return React.createElement(FileUploadComponent, null);
+        }
+        return (React.createElement("div", {"className": "table-responsive"}, React.createElement(DatatypeMapper, React.__spread({}, this.props.datatypeProps)), React.createElement("input", {"type": "button", "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
     };
     Experiment.prototype.render = function () {
-        var elements = this.props.Columns == null ? this.getUploadComponents() : this.getTableComponents();
-        return (React.createElement("div", {"className": "col-xs-10", "id": "experiment"}, elements));
+        return (React.createElement("div", {"className": "col-xs-10", "id": "experiment"}, this.getElement()));
     };
     return Experiment;
 })(React.Component);
@@ -161,7 +198,6 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 var ExperimentStore = require("../stores/ExperimentStore");
-var UserStore = require("../stores/UserStore");
 var ExperimentComponent = require("./Experiment");
 var ExperimentController = (function (_super) {
     __extends(ExperimentController, _super);
@@ -169,26 +205,38 @@ var ExperimentController = (function (_super) {
         var _this = this;
         _super.call(this, props, context);
         this.state = this.buildState();
-        ExperimentStore.Instance.addChangeListener(function () { return _this.onChange(); });
+        this.changeEventHandler = function () { return _this.onChange(); };
     }
+    ExperimentController.prototype.componentDidMount = function () {
+        ExperimentStore.Instance.addChangeListener(this.changeEventHandler);
+    };
+    ExperimentController.prototype.componentWillUnmount = function () {
+        ExperimentStore.Instance.removeChangeListener(this.changeEventHandler);
+    };
     ExperimentController.prototype.buildState = function () {
+        var experimentData = ExperimentStore.Instance.getState();
         return {
-            Experiment: ExperimentStore.Instance.getState(),
-            User: UserStore.Instance.getState()
+            message: experimentData.message,
+            mapperProps: {
+                availableTypes: experimentData.availableTypes,
+                examples: experimentData.examples,
+                datatypes: experimentData.datatypes
+            }
         };
     };
     ExperimentController.prototype.onChange = function () {
         this.setState(this.buildState());
     };
     ExperimentController.prototype.render = function () {
-        var alertElement = this.state.Experiment.Message != null ? React.createElement("div", {"className": "alert"}, this.state.Experiment.Message) : null;
-        return (React.createElement("div", null, alertElement, React.createElement(ExperimentComponent.Experiment, {"Columns": this.state.Experiment.Columns, "Rows": this.state.Experiment.Rows})));
+        var alertElement = this.state.message != null ? React.createElement("div", {"className": "alert"}, this.state.message) : null;
+        var showUpload = this.state.mapperProps.datatypes == null;
+        return (React.createElement("div", null, alertElement, React.createElement(ExperimentComponent.Experiment, {"showUpload": showUpload, "datatypeProps": this.state.mapperProps})));
     };
     return ExperimentController;
 })(React.Component);
 exports.ExperimentController = ExperimentController;
 
-},{"../stores/ExperimentStore":169,"../stores/UserStore":171,"./Experiment":2,"react":166}],4:[function(require,module,exports){
+},{"../stores/ExperimentStore":169,"./Experiment":2,"react":166}],4:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -20812,56 +20860,65 @@ var ExperimentStore = (function (_super) {
     function ExperimentStore() {
         var _this = this;
         _super.call(this);
-        this.state = { Columns: null, Rows: null, Message: null, DataTypes: null };
-        this.dataTypesUploadUrl = null;
+        this.state = { examples: null, message: null, datatypes: null, availableTypes: null };
+        this.experimentUrl = null;
+        this.fileUploadUrl = null;
         this.dispatcher.register(Actions.Upload.UPLOAD_COMMITED, function (_) { return _this.commitUpload(_); });
         this.dispatcher.register(Actions.Upload.UPLOAD_COMPLETE, function (_) { return _this.uploadCompleted(_); });
         this.dispatcher.register(Actions.Upload.UPLOAD_FAILED, function (_) { return _this.uploadFailed(_); });
-        this.dispatcher.register(Actions.Experiment.DATATYPES_COMMITED, function (_) { return _this.commitUploadDataTypes(_); });
+        this.dispatcher.register(Actions.Experiment.DATATYPES_COMMITED, function () { return _this.commitUploadDataTypes(); });
         this.dispatcher.register(Actions.Experiment.UPLOAD_DATATYPES_COMPLETE, function (_) { return _this.uploadDataTypesCompleted(_); });
         this.dispatcher.register(Actions.Experiment.UPLOAD_DATATYPES_FAILED, function (_) { return _this.uploadDataTypesFailed(_); });
         this.dispatcher.register(Actions.User.USER_ID_SET, function (_) { return _this.userChanged(_); });
+        this.dispatcher.register(Actions.Experiment.DATATYPES_CHANGED, function (_) { return _this.datatypesChanged(_); });
     }
     ExperimentStore.prototype.getState = function () {
         return $.extend({}, this.state);
     };
     ExperimentStore.prototype.commitUpload = function (file) {
-        Actions.Upload.PerformUpload(file);
-        this.state.Columns = null;
-        this.state.Message = "Uploading...";
-        this.emitChange();
+        if (this.fileUploadUrl != null) {
+            Actions.Upload.PerformUpload(this.fileUploadUrl, file);
+            this.state.message = "Uploading...";
+            this.emitChange();
+        }
     };
     ExperimentStore.prototype.uploadCompleted = function (data) {
-        this.state.Columns = data.Columns;
-        this.state.Rows = data.Rows;
-        this.state.Message = null;
+        this.state.examples = data.rows;
+        this.state.datatypes = data.columns.map(function (column) { return { column: column, datatype: data.availableTypes[0] }; });
+        this.state.availableTypes = data.availableTypes;
+        this.experimentUrl = "/experiment/" + data.id.toString();
+        this.state.message = null;
         this.emitChange();
     };
     ExperimentStore.prototype.uploadFailed = function (message) {
-        this.state.Columns = null;
-        this.state.Message = message;
+        this.state.message = message;
         this.emitChange();
     };
-    ExperimentStore.prototype.commitUploadDataTypes = function (data) {
-        if (this.dataTypesUploadUrl != null) {
-            Actions.Experiment.UploadDatatypes(this.dataTypesUploadUrl, data);
+    ExperimentStore.prototype.commitUploadDataTypes = function () {
+        if (this.experimentUrl != null) {
+            Actions.Experiment.UploadDatatypes(this.experimentUrl, this.state.datatypes);
         }
     };
     ExperimentStore.prototype.uploadDataTypesCompleted = function (data) {
-        this.state.DataTypes = data;
+        this.state.datatypes = data;
         this.emitChange();
     };
     ExperimentStore.prototype.uploadDataTypesFailed = function (message) {
-        this.state.Message = message;
+        this.state.message = message;
         this.emitChange();
     };
     ExperimentStore.prototype.userChanged = function (userId) {
         this.waitFor(User.Instance);
         var userId = User.Instance.getState().UserId;
-        this.dataTypesUploadUrl = null;
+        this.fileUploadUrl = null;
         if (userId != null) {
-            this.dataTypesUploadUrl = "/user/" + userId + "/datatypes";
+            this.fileUploadUrl = userId + "/upload";
+            this.emitChange();
         }
+    };
+    ExperimentStore.prototype.datatypesChanged = function (data) {
+        this.state.datatypes = this.state.datatypes.map(function (dt) { return (dt.column == data.column) ? data : dt; });
+        this.emitChange();
     };
     return ExperimentStore;
 })(Base.BaseStore);

@@ -6,21 +6,36 @@ import ExperimentComponent = require("./Experiment")
 import Actions = require("../actions/actions")
 
 export interface IExperimentControllerProps {
-	Experiment:ExperimentStore.IExperimentStoreState;
-	User:UserStore.IUserStoreState;
+	mapperProps:ExperimentComponent.IDatatypeMapperProps;
+	message:string;
 }
 
 export class ExperimentController extends React.Component<{}, IExperimentControllerProps> {
+	private changeEventHandler:()=>void;
 	constructor(props?:{}, context?:any) {
 		super(props, context);
-		this.state = this.buildState();
-		ExperimentStore.Instance.addChangeListener(() => this.onChange());
+		this.state = this.buildState();	
+		this.changeEventHandler = () => this.onChange();
 	}
-	private buildState() {
+    private componentDidMount() {
+		// Attach to store.
+		ExperimentStore.Instance.addChangeListener(this.changeEventHandler);		
+	}
+	private componentWillUnmount() {
+		// Detach from store.
+		ExperimentStore.Instance.removeChangeListener(this.changeEventHandler);
+	}
+
+	private buildState():IExperimentControllerProps {
+		var experimentData =ExperimentStore.Instance.getState();		
 		return {
-			Experiment: ExperimentStore.Instance.getState(),
-			User: UserStore.Instance.getState()
-			};
+			message: experimentData.message,
+			mapperProps: {
+				availableTypes:experimentData.availableTypes,
+				examples: experimentData.examples,
+				datatypes:experimentData.datatypes
+			}
+		};
 	}
 	
 	private onChange() {
@@ -28,10 +43,11 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 	}
 	
 	public render():JSX.Element {
-		var alertElement = this.state.Experiment.Message != null?<div className="alert">{this.state.Experiment.Message}</div>:null		
+		var alertElement = this.state.message != null?<div className="alert">{this.state.message}</div>:null		
+		var showUpload = this.state.mapperProps.datatypes == null;
 		return(<div>
 		{alertElement}
-		<ExperimentComponent.Experiment Columns={this.state.Experiment.Columns} Rows={this.state.Experiment.Rows} />
+		<ExperimentComponent.Experiment showUpload={showUpload} datatypeProps={this.state.mapperProps} />
 		</div>)
 	}
 	

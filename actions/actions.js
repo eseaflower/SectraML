@@ -49,9 +49,9 @@ var _Upload = (function () {
     _Upload.prototype.UploadFailed = function (message) {
         AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_FAILED, data: message });
     };
-    _Upload.prototype.PerformUpload = function (file) {
+    _Upload.prototype.PerformUpload = function (url, file) {
         var _this = this;
-        Ajax.uploadFile("/upload", file).
+        Ajax.uploadFile(url, file).
             done(function (data) { return _this.UploadComplete(data); }).
             fail(function (xhr, status, err) {
             var message = ["Upload failed:", xhr.status.toString(), xhr.statusText].join(' ');
@@ -66,9 +66,10 @@ var _Experiment = (function () {
         this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
         this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
         this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
+        this.DATATYPES_CHANGED = "DATATYPES_CHANGED";
     }
-    _Experiment.prototype.CommitDatatypes = function (data) {
-        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: data });
+    _Experiment.prototype.CommitDatatypes = function () {
+        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: null });
     };
     _Experiment.prototype.UploadDataTypesComplete = function (data) {
         AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_DATATYPES_COMPLETE, data: data });
@@ -84,6 +85,9 @@ var _Experiment = (function () {
             var message = ["Upload datatypes failed:", xhr.status.toString(), xhr.statusText].join(' ');
             _this.UploadDataTypesFailed(message);
         });
+    };
+    _Experiment.prototype.DatatypeChanged = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_CHANGED, data: data });
     };
     return _Experiment;
 })();

@@ -1,5 +1,6 @@
 import json
 
+
 def jsonarg(member):
     def inner(self, *args, **kwargs):
         jsonArgument = self.get_argument("args")
@@ -12,6 +13,8 @@ def jsonreturn(member):
     def inner(self, *args, **kwargs):
         try:
             returnData = member(self, *args, **kwargs)
+            if isinstance(returnData, JsonSerializable):
+                returnData = returnData.asSerializable()
         except ServerException as se:
             returnData = se.asSerializable()
             self.set_status(se.statusCode)
@@ -26,6 +29,9 @@ def jsonmethod(member):
     return jsonreturn(jsonarg(member))
 
 
+class JsonSerializable(object):
+    def asSerializable(self):
+        return self.__dict__
 
 class ServerException(Exception):
     def __init__(self, message, statusCode=500):
