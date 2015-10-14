@@ -79,3 +79,51 @@ class _Upload {
 	}
 }
 export var Upload = new _Upload()
+
+export interface IDataType {
+	Column:string;
+	Datatype:string;
+}
+
+class _Experiment {
+	public DATATYPES_COMMITED:string;
+	public UPLOAD_DATATYPES_COMPLETE:string;
+	public UPLOAD_DATATYPES_FAILED:string;
+	constructor() {
+		this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
+		this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
+		this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
+	}	
+	public CommitDatatypes(data:IDataType[]) {
+		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_COMMITED, data:data});
+	}
+	
+	private UploadDataTypesComplete(data:IDataType[]){
+		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_DATATYPES_COMPLETE, data:data});
+	}
+	private UploadDataTypesFailed(message:string) {				
+		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_DATATYPES_FAILED, data:message});
+	}
+	public UploadDatatypes(url:string, data:IDataType[]) {
+		Ajax.postJson<IDataType[]>(url, data).
+		done((_) => this.UploadDataTypesComplete(_)).
+		fail((xhr:JQueryXHR, status:string, err:Error) => {
+			var message = ["Upload datatypes failed:",xhr.status.toString(),xhr.statusText].join(' ');				
+			this.UploadDataTypesFailed(message);	
+		});
+	}
+}
+
+export var Experiment = new _Experiment()
+
+
+class _User {
+	public USER_ID_SET:string;
+	constructor() {
+		this.USER_ID_SET = "USER_ID_SET";
+	}
+	public SetUserId(userId:string) {
+		AppDispatcher.Dispatcher.dispatch({type:this.USER_ID_SET, data:userId});
+	}
+}
+export var User = new _User();

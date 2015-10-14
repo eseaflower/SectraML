@@ -62,6 +62,43 @@ var _Upload = (function () {
     return _Upload;
 })();
 exports.Upload = new _Upload();
+var _Experiment = (function () {
+    function _Experiment() {
+        this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
+        this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
+        this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
+    }
+    _Experiment.prototype.CommitDatatypes = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: data });
+    };
+    _Experiment.prototype.UploadDataTypesComplete = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_DATATYPES_COMPLETE, data: data });
+    };
+    _Experiment.prototype.UploadDataTypesFailed = function (message) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_DATATYPES_FAILED, data: message });
+    };
+    _Experiment.prototype.UploadDatatypes = function (url, data) {
+        var _this = this;
+        Ajax.postJson(url, data).
+            done(function (_) { return _this.UploadDataTypesComplete(_); }).
+            fail(function (xhr, status, err) {
+            var message = ["Upload datatypes failed:", xhr.status.toString(), xhr.statusText].join(' ');
+            _this.UploadDataTypesFailed(message);
+        });
+    };
+    return _Experiment;
+})();
+exports.Experiment = new _Experiment();
+var _User = (function () {
+    function _User() {
+        this.USER_ID_SET = "USER_ID_SET";
+    }
+    _User.prototype.SetUserId = function (userId) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.USER_ID_SET, data: userId });
+    };
+    return _User;
+})();
+exports.User = new _User();
 
 },{"../dispatcher/AppDispatcher":6,"../services/AjaxJson":167}],2:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
@@ -81,17 +118,35 @@ var Experiment = (function (_super) {
         var value = htmlComponent.getDOMNode().files[0];
         Actions.Upload.CommitUpload(value);
     };
+    Experiment.prototype.handleCreateMapper = function () {
+        var _this = this;
+        var columnDesc = this.props.Columns.map(function (item) {
+            var refId = _this.getSelectRefName(item);
+            var component = _this.refs[refId];
+            var dataType = component.getDOMNode().value;
+            return { Column: item, Datatype: dataType };
+        });
+        Actions.Experiment.CommitDatatypes(columnDesc);
+    };
     Experiment.prototype.getUploadComponents = function () {
         var _this = this;
         return (React.createElement("div", null, React.createElement("label", null, "Data file"), React.createElement("input", {"className": "wide", "ref": "filename", "type": "file"}), React.createElement("input", {"value": "Upload...", "type": "button", "onClick": function () { return _this.handleUpload(); }})));
     };
-    Experiment.prototype.getColumnComponents = function () {
-        var columnHeaderElements = this.props.Columns.map(function (name) { return React.createElement("th", null, name); });
+    Experiment.prototype.getSelectRefName = function (name) {
+        return name + "_ref";
+    };
+    Experiment.prototype.getDataTypeSelect = function (name) {
+        return (React.createElement("select", {"ref": this.getSelectRefName(name)}, React.createElement("option", {"value": "Ignore"}, "Ignore"), React.createElement("option", {"value": "BagOfItems"}, "Bag of items"), React.createElement("option", {"value": "Raw"}, "Raw"), React.createElement("option", {"value": "Label"}, "Label")));
+    };
+    Experiment.prototype.getTableComponents = function () {
+        var _this = this;
+        var columnHeaderNames = this.props.Columns.map(function (name) { return React.createElement("th", null, name); });
+        var columnHeaderTypes = this.props.Columns.map(function (name) { return React.createElement("th", null, _this.getDataTypeSelect(name)); });
         var examples = this.props.Rows.map(function (row) { return React.createElement("tr", null, row.map(function (item) { return React.createElement("td", null, item); })); });
-        return (React.createElement("div", {"className": "table-responsive"}, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, columnHeaderElements)), React.createElement("tbody", null, examples))));
+        return (React.createElement("div", {"className": "table-responsive"}, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, columnHeaderNames), React.createElement("tr", null, columnHeaderTypes)), React.createElement("tbody", null, examples)), React.createElement("input", {"type": "button", "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
     };
     Experiment.prototype.render = function () {
-        var elements = this.props.Columns == null ? this.getUploadComponents() : this.getColumnComponents();
+        var elements = this.props.Columns == null ? this.getUploadComponents() : this.getTableComponents();
         return (React.createElement("div", {"className": "col-xs-10", "id": "experiment"}, elements));
     };
     return Experiment;
@@ -106,26 +161,34 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 var ExperimentStore = require("../stores/ExperimentStore");
+var UserStore = require("../stores/UserStore");
 var ExperimentComponent = require("./Experiment");
 var ExperimentController = (function (_super) {
     __extends(ExperimentController, _super);
     function ExperimentController(props, context) {
         var _this = this;
         _super.call(this, props, context);
-        this.state = ExperimentStore.Instance.getState();
+        this.state = this.buildState();
         ExperimentStore.Instance.addChangeListener(function () { return _this.onChange(); });
     }
+    ExperimentController.prototype.buildState = function () {
+        return {
+            Experiment: ExperimentStore.Instance.getState(),
+            User: UserStore.Instance.getState()
+        };
+    };
     ExperimentController.prototype.onChange = function () {
-        this.setState(ExperimentStore.Instance.getState());
+        this.setState(this.buildState());
     };
     ExperimentController.prototype.render = function () {
-        return (React.createElement("div", null, React.createElement("div", {"className": "alert"}, this.state.Message), React.createElement(ExperimentComponent.Experiment, {"Columns": this.state.Columns, "Rows": this.state.Rows})));
+        var alertElement = this.state.Experiment.Message != null ? React.createElement("div", {"className": "alert"}, this.state.Experiment.Message) : null;
+        return (React.createElement("div", null, alertElement, React.createElement(ExperimentComponent.Experiment, {"Columns": this.state.Experiment.Columns, "Rows": this.state.Experiment.Rows})));
     };
     return ExperimentController;
 })(React.Component);
 exports.ExperimentController = ExperimentController;
 
-},{"../stores/ExperimentStore":169,"./Experiment":2,"react":166}],4:[function(require,module,exports){
+},{"../stores/ExperimentStore":169,"../stores/UserStore":171,"./Experiment":2,"react":166}],4:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -227,6 +290,11 @@ var TableDispatcher = (function () {
         this.dispatchTable = {};
         this.id = null;
     }
+    TableDispatcher.prototype.waitFor = function (other) {
+        if (other.isRegistered) {
+            exports.Dispatcher.waitFor([other.id]);
+        }
+    };
     TableDispatcher.prototype.register = function (type, callback) {
         this.dispatchTable[type] = callback;
         this.startDispatching();
@@ -20723,6 +20791,9 @@ var BaseStore = (function (_super) {
     BaseStore.prototype.emitChange = function () {
         this.emit(exports.Events.Change);
     };
+    BaseStore.prototype.waitFor = function (other) {
+        this.dispatcher.waitFor(other.dispatcher);
+    };
     return BaseStore;
 })(EventEmitter);
 exports.BaseStore = BaseStore;
@@ -20735,15 +20806,21 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Base = require('./BaseStore');
 var Actions = require('../actions/actions');
+var User = require("./UserStore");
 var ExperimentStore = (function (_super) {
     __extends(ExperimentStore, _super);
     function ExperimentStore() {
         var _this = this;
         _super.call(this);
-        this.state = { Columns: null, Rows: null, Message: null };
+        this.state = { Columns: null, Rows: null, Message: null, DataTypes: null };
+        this.dataTypesUploadUrl = null;
         this.dispatcher.register(Actions.Upload.UPLOAD_COMMITED, function (_) { return _this.commitUpload(_); });
         this.dispatcher.register(Actions.Upload.UPLOAD_COMPLETE, function (_) { return _this.uploadCompleted(_); });
         this.dispatcher.register(Actions.Upload.UPLOAD_FAILED, function (_) { return _this.uploadFailed(_); });
+        this.dispatcher.register(Actions.Experiment.DATATYPES_COMMITED, function (_) { return _this.commitUploadDataTypes(_); });
+        this.dispatcher.register(Actions.Experiment.UPLOAD_DATATYPES_COMPLETE, function (_) { return _this.uploadDataTypesCompleted(_); });
+        this.dispatcher.register(Actions.Experiment.UPLOAD_DATATYPES_FAILED, function (_) { return _this.uploadDataTypesFailed(_); });
+        this.dispatcher.register(Actions.User.USER_ID_SET, function (_) { return _this.userChanged(_); });
     }
     ExperimentStore.prototype.getState = function () {
         return $.extend({}, this.state);
@@ -20765,12 +20842,33 @@ var ExperimentStore = (function (_super) {
         this.state.Message = message;
         this.emitChange();
     };
+    ExperimentStore.prototype.commitUploadDataTypes = function (data) {
+        if (this.dataTypesUploadUrl != null) {
+            Actions.Experiment.UploadDatatypes(this.dataTypesUploadUrl, data);
+        }
+    };
+    ExperimentStore.prototype.uploadDataTypesCompleted = function (data) {
+        this.state.DataTypes = data;
+        this.emitChange();
+    };
+    ExperimentStore.prototype.uploadDataTypesFailed = function (message) {
+        this.state.Message = message;
+        this.emitChange();
+    };
+    ExperimentStore.prototype.userChanged = function (userId) {
+        this.waitFor(User.Instance);
+        var userId = User.Instance.getState().UserId;
+        this.dataTypesUploadUrl = null;
+        if (userId != null) {
+            this.dataTypesUploadUrl = "/user/" + userId + "/datatypes";
+        }
+    };
     return ExperimentStore;
 })(Base.BaseStore);
 exports.ExperimentStore = ExperimentStore;
 exports.Instance = new ExperimentStore();
 
-},{"../actions/actions":1,"./BaseStore":168}],170:[function(require,module,exports){
+},{"../actions/actions":1,"./BaseStore":168,"./UserStore":171}],170:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -20814,6 +20912,33 @@ var LoginStore = (function (_super) {
 exports.LoginStore = LoginStore;
 exports.Instance = new LoginStore();
 
+},{"../actions/actions":1,"./BaseStore":168}],171:[function(require,module,exports){
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Base = require('./BaseStore');
+var Actions = require('../actions/actions');
+var UserStore = (function (_super) {
+    __extends(UserStore, _super);
+    function UserStore() {
+        var _this = this;
+        _super.call(this);
+        this.state = { UserId: null };
+        this.dispatcher.register(Actions.User.USER_ID_SET, function (_) { return _this.SetUserId(_); });
+    }
+    UserStore.prototype.getState = function () {
+        return $.extend({}, this.state);
+    };
+    UserStore.prototype.SetUserId = function (userId) {
+        this.state.UserId = userId;
+        this.emitChange();
+    };
+    return UserStore;
+})(Base.BaseStore);
+exports.Instance = new UserStore();
+
 },{"../actions/actions":1,"./BaseStore":168}],"main":[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20824,6 +20949,7 @@ var React = require("react");
 var Login = require("./Login");
 var Sidebar = require("./Sidebar");
 var Experiment = require("./ExperimentController");
+var Actions = require("../actions/actions");
 function buildLogin() {
     return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-4"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(Login.LoginComponent, null)))));
 }
@@ -20867,7 +20993,8 @@ function login(contentId) {
 exports.login = login;
 function user(contentId, userId) {
     mountAndRender(contentId, buildUser(userId));
+    Actions.User.SetUserId(userId.toString());
 }
 exports.user = user;
 
-},{"./ExperimentController":3,"./Login":4,"./Sidebar":5,"react":166}]},{},["main"]);
+},{"../actions/actions":1,"./ExperimentController":3,"./Login":4,"./Sidebar":5,"react":166}]},{},["main"]);

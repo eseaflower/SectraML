@@ -23,6 +23,9 @@ var BaseStore = (function (_super) {
     BaseStore.prototype.emitChange = function () {
         this.emit(exports.Events.Change);
     };
+    BaseStore.prototype.waitFor = function (other) {
+        this.dispatcher.waitFor(other.dispatcher);
+    };
     return BaseStore;
 })(EventEmitter);
 exports.BaseStore = BaseStore;

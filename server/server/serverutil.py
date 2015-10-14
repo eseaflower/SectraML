@@ -1,11 +1,11 @@
 import json
 
 def jsonarg(member):
-    def inner(self):
+    def inner(self, *args, **kwargs):
         jsonArgument = self.get_argument("args")
         deserialized = json.loads(jsonArgument)
-        returnData = None
-        return member(self, deserialized)
+        newArgs = args + tuple([deserialized])
+        return member(self, *newArgs, **kwargs)
     return inner
 
 def jsonreturn(member):

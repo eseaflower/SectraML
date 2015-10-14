@@ -3,6 +3,7 @@ import React=require("react");
 import Login=require("./Login")
 import Sidebar = require("./Sidebar");
 import Experiment = require("./ExperimentController")
+import Actions = require("../actions/actions")
 
 function buildLogin():JSX.Element {	    
 	return (<div className="container">      
@@ -68,5 +69,6 @@ export function login(contentId) {
 }
 
 export function user(contentId:string, userId:number) {
-	mountAndRender(contentId, buildUser(userId));		
+	mountAndRender(contentId, buildUser(userId));
+	Actions.User.SetUserId(userId.toString());			
 }

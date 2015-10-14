@@ -7,6 +7,7 @@ var React = require("react");
 var Login = require("./Login");
 var Sidebar = require("./Sidebar");
 var Experiment = require("./ExperimentController");
+var Actions = require("../actions/actions");
 function buildLogin() {
     return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-4"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(Login.LoginComponent, null)))));
 }
@@ -50,5 +51,6 @@ function login(contentId) {
 exports.login = login;
 function user(contentId, userId) {
     mountAndRender(contentId, buildUser(userId));
+    Actions.User.SetUserId(userId.toString());
 }
 exports.user = user;

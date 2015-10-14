@@ -4,6 +4,7 @@ import tornado.web
 import os.path
 import json
 from serverutil import jsonarg, jsonreturn, jsonmethod, ServerException, toJsArgs
+from experiment import getDataDescription
 import time
 
 
@@ -37,28 +38,31 @@ class UploadHandler(tornado.web.RequestHandler):
         self.uploadRoot = uploadRoot
         return super().initialize()
     
+    def getUploadFilename(self, filename):
+        return os.path.join(self.uploadRoot, filename)
+
     def saveFile(self, filename, data):
         if not os.path.exists(self.uploadRoot):
             os.makedirs(self.uploadRoot)
-        filePath = os.path.join(self.uploadRoot, filename)
+        filePath = self.getUploadFilename(filename)
         with open(filePath, "wb") as f:
             f.write(data)
 
     @jsonreturn
     def post(self):
         fileinfo = self.request.files['datafile'][0]
-        self.saveFile("tmp.dat", fileinfo.body)
-               
-        return {
-            "Columns":["Count", "Code", "Bodypart", "Description", "Label"],
-            "Rows":[
-                ["123", "32000", "Chest", "Chest xray", "CHEST"],
-                ["5235", "MRT00", "Head", "Head with contrast", "HEAD"],
-                ["834", "65100", "Fotled", "Ankle compression", "FOOT"],
-                ["3432", "72002", "Knee", "Knä med belastn.", "KNEE"]
-                ]
-            }
+        filename = "tmp.dat"
+        self.saveFile(filename, fileinfo.body)
+        return getDataDescription(self.getUploadFilename(filename))
+                                           
 
+class DataTypeHandler(tornado.web.RequestHandler):
+    @jsonmethod
+    def post(self, userId, args):
+        for desc in args:
+            print(desc)
+        return args
+    get=post
 
 if __name__ == "__main__":
     dist_path = os.path.join(os.path.dirname(__file__), "../../dist")    
@@ -68,6 +72,7 @@ if __name__ == "__main__":
         tornado.web.url("/login", LoginHandler),
         tornado.web.url("/user/([0-9]+)", UserHandler),
         tornado.web.url("/upload", UploadHandler, {"uploadRoot":uploadPath}),
+        tornado.web.url("/user/([0-9]+)/datatypes", DataTypeHandler),
         tornado.web.url("/", MainHandler),
         tornado.web.url(r"/(.*)", tornado.web.StaticFileHandler, {"path":dist_path}),
         ],

@@ -23,5 +23,9 @@ export class BaseStore extends EventEmitter {
 	protected emitChange() {
 		this.emit(Events.Change);
 	}
+	
+	public waitFor(other:BaseStore) {
+		this.dispatcher.waitFor(other.dispatcher);
+	}
 
 }

@@ -61,3 +61,40 @@ var _Upload = (function () {
     return _Upload;
 })();
 exports.Upload = new _Upload();
+var _Experiment = (function () {
+    function _Experiment() {
+        this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
+        this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
+        this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
+    }
+    _Experiment.prototype.CommitDatatypes = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: data });
+    };
+    _Experiment.prototype.UploadDataTypesComplete = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_DATATYPES_COMPLETE, data: data });
+    };
+    _Experiment.prototype.UploadDataTypesFailed = function (message) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.UPLOAD_DATATYPES_FAILED, data: message });
+    };
+    _Experiment.prototype.UploadDatatypes = function (url, data) {
+        var _this = this;
+        Ajax.postJson(url, data).
+            done(function (_) { return _this.UploadDataTypesComplete(_); }).
+            fail(function (xhr, status, err) {
+            var message = ["Upload datatypes failed:", xhr.status.toString(), xhr.statusText].join(' ');
+            _this.UploadDataTypesFailed(message);
+        });
+    };
+    return _Experiment;
+})();
+exports.Experiment = new _Experiment();
+var _User = (function () {
+    function _User() {
+        this.USER_ID_SET = "USER_ID_SET";
+    }
+    _User.prototype.SetUserId = function (userId) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.USER_ID_SET, data: userId });
+    };
+    return _User;
+})();
+exports.User = new _User();

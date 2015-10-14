@@ -19,6 +19,12 @@ export class TableDispatcher {
 		this.id = null;				
 	}
 	
+	public waitFor(other:TableDispatcher) {
+		if (other.isRegistered) {
+			Dispatcher.waitFor([other.id]);
+		}
+	}
+	
 	public register<U>(type:string, callback:(arg:U)=>void):void {
 		this.dispatchTable[type] = callback;
 		this.startDispatching(); 					

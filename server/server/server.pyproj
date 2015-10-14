@@ -22,6 +22,10 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CSVLoader.py" />
+    <Compile Include="experiment.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="server.py" />
     <Compile Include="serverutil.py">
       <SubType>Code</SubType>

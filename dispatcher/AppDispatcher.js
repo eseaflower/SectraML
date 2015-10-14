@@ -6,6 +6,11 @@ var TableDispatcher = (function () {
         this.dispatchTable = {};
         this.id = null;
     }
+    TableDispatcher.prototype.waitFor = function (other) {
+        if (other.isRegistered) {
+            exports.Dispatcher.waitFor([other.id]);
+        }
+    };
     TableDispatcher.prototype.register = function (type, callback) {
         this.dispatchTable[type] = callback;
         this.startDispatching();

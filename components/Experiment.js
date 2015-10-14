@@ -15,17 +15,35 @@ var Experiment = (function (_super) {
         var value = htmlComponent.getDOMNode().files[0];
         Actions.Upload.CommitUpload(value);
     };
+    Experiment.prototype.handleCreateMapper = function () {
+        var _this = this;
+        var columnDesc = this.props.Columns.map(function (item) {
+            var refId = _this.getSelectRefName(item);
+            var component = _this.refs[refId];
+            var dataType = component.getDOMNode().value;
+            return { Column: item, Datatype: dataType };
+        });
+        Actions.Experiment.CommitDatatypes(columnDesc);
+    };
     Experiment.prototype.getUploadComponents = function () {
         var _this = this;
         return (React.createElement("div", null, React.createElement("label", null, "Data file"), React.createElement("input", {"className": "wide", "ref": "filename", "type": "file"}), React.createElement("input", {"value": "Upload...", "type": "button", "onClick": function () { return _this.handleUpload(); }})));
     };
-    Experiment.prototype.getColumnComponents = function () {
-        var columnHeaderElements = this.props.Columns.map(function (name) { return React.createElement("th", null, name); });
+    Experiment.prototype.getSelectRefName = function (name) {
+        return name + "_ref";
+    };
+    Experiment.prototype.getDataTypeSelect = function (name) {
+        return (React.createElement("select", {"ref": this.getSelectRefName(name)}, React.createElement("option", {"value": "Ignore"}, "Ignore"), React.createElement("option", {"value": "BagOfItems"}, "Bag of items"), React.createElement("option", {"value": "Raw"}, "Raw"), React.createElement("option", {"value": "Label"}, "Label")));
+    };
+    Experiment.prototype.getTableComponents = function () {
+        var _this = this;
+        var columnHeaderNames = this.props.Columns.map(function (name) { return React.createElement("th", null, name); });
+        var columnHeaderTypes = this.props.Columns.map(function (name) { return React.createElement("th", null, _this.getDataTypeSelect(name)); });
         var examples = this.props.Rows.map(function (row) { return React.createElement("tr", null, row.map(function (item) { return React.createElement("td", null, item); })); });
-        return (React.createElement("div", {"className": "table-responsive"}, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, columnHeaderElements)), React.createElement("tbody", null, examples))));
+        return (React.createElement("div", {"className": "table-responsive"}, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, columnHeaderNames), React.createElement("tr", null, columnHeaderTypes)), React.createElement("tbody", null, examples)), React.createElement("input", {"type": "button", "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
     };
     Experiment.prototype.render = function () {
-        var elements = this.props.Columns == null ? this.getUploadComponents() : this.getColumnComponents();
+        var elements = this.props.Columns == null ? this.getUploadComponents() : this.getTableComponents();
         return (React.createElement("div", {"className": "col-xs-10", "id": "experiment"}, elements));
     };
     return Experiment;
