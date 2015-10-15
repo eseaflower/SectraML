@@ -12,6 +12,15 @@ import numpy as np
 import os
 import pickle
 
+
+class ExperimentFactory(object):
+    def __init__(self, experimentId):
+        self.id = experimentId
+    
+    def createDataMapping(self, data):
+        return saveDatamapping(self.id, data)
+
+
 class ExperimentDescriptor(JsonSerializable):
     def __init__(self, id, columns, rows, availableTypes):
         self.id = id

@@ -4,8 +4,9 @@ import tornado.web
 import os.path
 import json
 from serverutil import jsonarg, jsonreturn, jsonmethod, ServerException, toJsArgs
-from experiment import createExperiment, runExperiment
+from experiment import createExperiment, runExperiment, ExperimentFactory
 import time
+from inspect import getargspec
 
 
 class LoginHandler(tornado.web.RequestHandler):    
@@ -56,11 +57,35 @@ class UploadHandler(tornado.web.RequestHandler):
         return createExperiment(self.getUploadFilename(filename), userId)
                                            
 
-class ExperimentHandler(tornado.web.RequestHandler):
+class RpcHandler(tornado.web.RequestHandler):    
+    def initialize(self, factory):
+        self.factory = factory
+        # Split the args into constructor arguments
+        # and function arguments.
+        spec = getargspec(self.factory)
+        # Remove the 'self' argument
+        self.numCtorArgs = len(spec.args) - 1
+        return super().initialize()
+    
+    def dispatch(self, *args):
+        ctorArgs = args[:self.numCtorArgs]
+        #There should be a single additional argument
+        if len(args) != (self.numCtorArgs + 1):
+            raise ServerException("There should be {0} constructor arguments and a single method argument".format(numCtorArgs))
+                
+        instance = self.factory(*ctorArgs)
+        # Get the method call data.
+        methodData = args[-1]
+        methodName = methodData["type"]
+        method = getattr(instance, methodName)        
+        if method:
+            return method(methodData["data"])
+        else:
+            raise ServerException("Method {0} not found on instance".format(methodName))
+    
     @jsonmethod
-    def post(self, experimentId, args):
-        print("Experiment {0}".format(experimentId))
-        return runExperiment(experimentId, args)        
+    def post(self, *args):
+        return self.dispatch(*args)        
     get=post
 
 if __name__ == "__main__":
@@ -71,7 +96,7 @@ if __name__ == "__main__":
         tornado.web.url("/login", LoginHandler),
         tornado.web.url("/user/([0-9]+)", UserHandler),
         tornado.web.url("/user/([0-9]+)/upload", UploadHandler, {"uploadRoot":uploadPath}),
-        tornado.web.url("/experiment/([0-9]+)", ExperimentHandler),
+        tornado.web.url("/experiment/([0-9]+)", RpcHandler, {"factory":ExperimentFactory}),
         tornado.web.url("/", MainHandler),
         tornado.web.url(r"/(.*)", tornado.web.StaticFileHandler, {"path":dist_path}),
         ],

@@ -79,7 +79,7 @@ var _Experiment = (function () {
     };
     _Experiment.prototype.UploadDatatypes = function (url, data) {
         var _this = this;
-        Ajax.postJson(url, { type: "create_datamapping", data: data }).
+        Ajax.postJson(url, { type: "createDataMapping", data: data }).
             done(function (_) { return _this.UploadDataTypesComplete(_); }).
             fail(function (xhr, status, err) {
             var message = ["Upload datatypes failed:", xhr.status.toString(), xhr.statusText].join(' ');

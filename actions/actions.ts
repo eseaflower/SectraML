@@ -85,6 +85,7 @@ export var Upload = new _Upload()
 export interface IDataType {
 	column:string;
 	datatype:string;
+	custom:{[key:string]:string};
 }
 
 class _Experiment {	
@@ -109,7 +110,7 @@ class _Experiment {
 		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_DATATYPES_FAILED, data:message});
 	}
 	public UploadDatatypes(url:string, data:IDataType[]) {
-		Ajax.postJson<IDataType[]>(url, {type:"create_datamapping", data:data}).
+		Ajax.postJson<IDataType[]>(url, {type:"createDataMapping", data:data}).
 		done((_) => this.UploadDataTypesComplete(_)).
 		fail((xhr:JQueryXHR, status:string, err:Error) => {
 			var message = ["Upload datatypes failed:",xhr.status.toString(),xhr.statusText].join(' ');				

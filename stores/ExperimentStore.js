@@ -42,7 +42,9 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.uploadCompleted = function (data) {
         this.state.examples = data.rows;
-        this.state.datatypes = data.columns.map(function (column) { return { column: column, datatype: data.availableTypes[0] }; });
+        this.state.datatypes = data.columns.map(function (column) {
+            return { column: column, datatype: data.availableTypes[0], custom: {} };
+        });
         this.state.availableTypes = data.availableTypes;
         this.experimentUrl = "/experiment/" + data.id.toString();
         this.state.message = null;

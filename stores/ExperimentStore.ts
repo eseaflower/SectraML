@@ -50,8 +50,10 @@ export class ExperimentStore extends Base.BaseStore {
 		}
 	}
 	private uploadCompleted(data:Actions.IUploadData) {		
-		this.state.examples = data.rows;
-		this.state.datatypes = data.columns.map(column => {return {column:column, datatype:data.availableTypes[0]}});
+		this.state.examples = data.rows;		
+		this.state.datatypes = data.columns.map(column => {
+			return {column:column, datatype:data.availableTypes[0], custom:<{[key:string]:string}>{}}
+		});
 		this.state.availableTypes = data.availableTypes;
 		this.experimentUrl = "/experiment/" + data.id.toString();
 		this.state.message = null;
