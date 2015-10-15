@@ -8,6 +8,8 @@ export interface IExperimentStoreState {
 	message:string;
 	datatypes:Actions.IDataType[];
 	availableTypes:string[];
+	readyForMapping:boolean;
+	readyForTraining:boolean;	
 }
 
 export class ExperimentStore extends Base.BaseStore {
@@ -16,7 +18,14 @@ export class ExperimentStore extends Base.BaseStore {
 	private fileUploadUrl:string
 	constructor() {
 		super();
-		this.state = {examples: null, message:null, datatypes:null, availableTypes:null};
+		this.state = {
+			examples: null, 
+			message:null, 
+			datatypes:null, 
+			availableTypes:null, 
+			readyForTraining:false,
+			readyForMapping:false
+		};
 		this.experimentUrl = null;
 		this.fileUploadUrl = null;
 		this.dispatcher.register<File>(Actions.Upload.UPLOAD_COMMITED,(_)=>this.commitUpload(_));	
@@ -46,6 +55,8 @@ export class ExperimentStore extends Base.BaseStore {
 		this.state.availableTypes = data.availableTypes;
 		this.experimentUrl = "/experiment/" + data.id.toString();
 		this.state.message = null;
+		this.state.readyForMapping = true;
+		this.state.readyForTraining = false;
 		this.emitChange();
 	}
 	private uploadFailed(message:string) {		
@@ -54,12 +65,16 @@ export class ExperimentStore extends Base.BaseStore {
 	}
 	private commitUploadDataTypes() {
 		if (this.experimentUrl != null) {
+			this.state.readyForMapping = false;
 			Actions.Experiment.UploadDatatypes(this.experimentUrl, this.state.datatypes);
+			this.emitChange();
 		}
 	}
 	
 	private uploadDataTypesCompleted(data:Actions.IDataType[]) {
 		this.state.datatypes = data;
+		this.state.readyForMapping = true;
+		this.state.readyForTraining = true;
 		this.emitChange();
 	}
 	private uploadDataTypesFailed(message:string) {
@@ -81,6 +96,7 @@ export class ExperimentStore extends Base.BaseStore {
 	private datatypesChanged(data:Actions.IDataType) {
 		// Copy all but the changed data mapping
 		this.state.datatypes = this.state.datatypes.map(dt => (dt.column == data.column)?data:dt);
+		this.state.readyForTraining = false;
 		this.emitChange();	
 	}
 	

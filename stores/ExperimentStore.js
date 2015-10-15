@@ -11,7 +11,14 @@ var ExperimentStore = (function (_super) {
     function ExperimentStore() {
         var _this = this;
         _super.call(this);
-        this.state = { examples: null, message: null, datatypes: null, availableTypes: null };
+        this.state = {
+            examples: null,
+            message: null,
+            datatypes: null,
+            availableTypes: null,
+            readyForTraining: false,
+            readyForMapping: false
+        };
         this.experimentUrl = null;
         this.fileUploadUrl = null;
         this.dispatcher.register(Actions.Upload.UPLOAD_COMMITED, function (_) { return _this.commitUpload(_); });
@@ -39,6 +46,8 @@ var ExperimentStore = (function (_super) {
         this.state.availableTypes = data.availableTypes;
         this.experimentUrl = "/experiment/" + data.id.toString();
         this.state.message = null;
+        this.state.readyForMapping = true;
+        this.state.readyForTraining = false;
         this.emitChange();
     };
     ExperimentStore.prototype.uploadFailed = function (message) {
@@ -47,11 +56,15 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.commitUploadDataTypes = function () {
         if (this.experimentUrl != null) {
+            this.state.readyForMapping = false;
             Actions.Experiment.UploadDatatypes(this.experimentUrl, this.state.datatypes);
+            this.emitChange();
         }
     };
     ExperimentStore.prototype.uploadDataTypesCompleted = function (data) {
         this.state.datatypes = data;
+        this.state.readyForMapping = true;
+        this.state.readyForTraining = true;
         this.emitChange();
     };
     ExperimentStore.prototype.uploadDataTypesFailed = function (message) {
@@ -69,6 +82,7 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.datatypesChanged = function (data) {
         this.state.datatypes = this.state.datatypes.map(function (dt) { return (dt.column == data.column) ? data : dt; });
+        this.state.readyForTraining = false;
         this.emitChange();
     };
     return ExperimentStore;

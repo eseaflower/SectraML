@@ -4,7 +4,7 @@ import Actions = require("../actions/actions")
 
 
 
-class FileUploadComponent extends React.Component<{}, {}> {
+export class FileUploadComponent extends React.Component<{}, {}> {
 
 	private handleUpload() {
 		var htmlComponent = this.refs["filename"] as React.ClassicComponent<any, any>;
@@ -20,13 +20,14 @@ class FileUploadComponent extends React.Component<{}, {}> {
 	}	
 }
 
-export interface IDatatypeMapperProps {	
+export interface IDatatypeMapperTableProps {	
 	availableTypes:string[];
 	datatypes:Actions.IDataType[];
 	examples:string[][];
+	acceptEdit:boolean;
 }
 
-class DatatypeMapper extends React.Component<IDatatypeMapperProps, {}> {
+class DatatypeMapperTable extends React.Component<IDatatypeMapperTableProps, {}> {
 			
 	private getColumnHeaders():JSX.Element[] {
 		return this.props.datatypes.map(dt => <th>{dt.column}</th>);		
@@ -41,14 +42,16 @@ class DatatypeMapper extends React.Component<IDatatypeMapperProps, {}> {
 	}
 	
 	private valueChanged(column:string) {
-		var refId = this.getSelectRefName(column);			
-		var component = this.refs[refId] as React.ClassicComponent<any, any>;
-		var datatype = component.getDOMNode<HTMLSelectElement>().value;
-		Actions.Experiment.DatatypeChanged({column:column, datatype:datatype});
+		if (this.props.acceptEdit) {
+			var refId = this.getSelectRefName(column);			
+			var component = this.refs[refId] as React.ClassicComponent<any, any>;
+			var datatype = component.getDOMNode<HTMLSelectElement>().value;
+			Actions.Experiment.DatatypeChanged({column:column, datatype:datatype});
+		}
 	}
 	
 	private getDatatypeSelect(dt:Actions.IDataType):JSX.Element {
-		return (<select onChange={()=>this.valueChanged(dt.column)} ref={this.getSelectRefName(dt.column)} value={dt.datatype}>
+		return (<select disabled={!this.props.acceptEdit} onChange={()=>this.valueChanged(dt.column)} ref={this.getSelectRefName(dt.column)} value={dt.datatype}>
 			{this.getOptions()}
 		</select>)				
 	}
@@ -82,33 +85,24 @@ class DatatypeMapper extends React.Component<IDatatypeMapperProps, {}> {
 }
 
 
-export interface IExperimentProps {			
-	showUpload:boolean;	
-	datatypeProps:IDatatypeMapperProps;
+export interface IExperimentProps {				
+	datatypeProps:IDatatypeMapperTableProps;
+	acceptEdit:boolean;
 }
 
 
 export class Experiment extends React.Component<IExperimentProps, {}> {
 		
 	private handleCreateMapper() {
-		Actions.Experiment.CommitDatatypes();
-	}
-			
-	private getElement():JSX.Element {
-		if (this.props.showUpload) {
-			return <FileUploadComponent/>
+		if (this.props.acceptEdit) {
+			Actions.Experiment.CommitDatatypes();
 		}
-		return (<div className="table-responsive">
-		<DatatypeMapper {...this.props.datatypeProps}/>
-		<input type="button" value="Create.." onClick={() => this.handleCreateMapper()}/>
-		</div>)		
 	}
 			
 	public render():JSX.Element {
-		return (			
-			<div className="col-xs-10" id="experiment">
-				{this.getElement()}				
-			</div>
-		)	
+		return (<div className="table-responsive">
+		<DatatypeMapperTable {...this.props.datatypeProps}/>
+		<input type="button" disabled={!this.props.acceptEdit} value="Create.." onClick={() => this.handleCreateMapper()}/>
+		</div>)		
 	}
 }

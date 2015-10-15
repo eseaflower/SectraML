@@ -22,14 +22,40 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="adbuilder2.py" />
     <Compile Include="CSVLoader.py" />
     <Compile Include="experiment.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="featuremapping.py" />
+    <Compile Include="Layers\ConvNet.py" />
+    <Compile Include="Layers\LinearRegression.py" />
+    <Compile Include="Layers\LogisticRegression.py" />
+    <Compile Include="Layers\nnlayer.py" />
+    <Compile Include="Layers\__init__.py" />
     <Compile Include="server.py" />
     <Compile Include="serverutil.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Trainer\Persistence.py" />
+    <Compile Include="Trainer\Trainer.py" />
+    <Compile Include="Trainer\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Layers\" />
+    <Folder Include="Layers\__pycache__\" />
+    <Folder Include="Trainer\" />
+    <Folder Include="Trainer\__pycache__\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Layers\__pycache__\ConvNet.cpython-34.pyc" />
+    <Content Include="Layers\__pycache__\LinearRegression.cpython-34.pyc" />
+    <Content Include="Layers\__pycache__\LogisticRegression.cpython-34.pyc" />
+    <Content Include="Layers\__pycache__\nnlayer.cpython-34.pyc" />
+    <Content Include="Layers\__pycache__\__init__.cpython-34.pyc" />
+    <Content Include="Trainer\__pycache__\Persistence.cpython-34.pyc" />
+    <Content Include="Trainer\__pycache__\Trainer.cpython-34.pyc" />
+    <Content Include="Trainer\__pycache__\__init__.cpython-34.pyc" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

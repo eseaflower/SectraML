@@ -3,3 +3,4 @@ typings/
 *.suo
 **/__pycache__
 **/uploaded
+**/experiment*

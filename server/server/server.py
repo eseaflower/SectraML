@@ -4,7 +4,7 @@ import tornado.web
 import os.path
 import json
 from serverutil import jsonarg, jsonreturn, jsonmethod, ServerException, toJsArgs
-from experiment import createExperiment
+from experiment import createExperiment, runExperiment
 import time
 
 
@@ -60,9 +60,7 @@ class ExperimentHandler(tornado.web.RequestHandler):
     @jsonmethod
     def post(self, experimentId, args):
         print("Experiment {0}".format(experimentId))
-        for desc in args:
-            print(desc)
-        return args
+        return runExperiment(experimentId, args)        
     get=post
 
 if __name__ == "__main__":

@@ -6,8 +6,10 @@ import ExperimentComponent = require("./Experiment")
 import Actions = require("../actions/actions")
 
 export interface IExperimentControllerProps {
-	mapperProps:ExperimentComponent.IDatatypeMapperProps;
+	mapperProps:ExperimentComponent.IDatatypeMapperTableProps;
 	message:string;
+	readyForTraining:boolean;	
+	readyForMapping:boolean;
 }
 
 export class ExperimentController extends React.Component<{}, IExperimentControllerProps> {
@@ -30,10 +32,13 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 		var experimentData =ExperimentStore.Instance.getState();		
 		return {
 			message: experimentData.message,
+			readyForTraining: experimentData.readyForTraining,
+			readyForMapping: experimentData.readyForMapping,
 			mapperProps: {
 				availableTypes:experimentData.availableTypes,
 				examples: experimentData.examples,
-				datatypes:experimentData.datatypes
+				datatypes:experimentData.datatypes,
+				acceptEdit:experimentData.readyForMapping
 			}
 		};
 	}
@@ -44,10 +49,16 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 	
 	public render():JSX.Element {
 		var alertElement = this.state.message != null?<div className="alert">{this.state.message}</div>:null		
-		var showUpload = this.state.mapperProps.datatypes == null;
-		return(<div>
+		var uploadElement = this.state.mapperProps.datatypes == null?<ExperimentComponent.FileUploadComponent/>:null;
+		var mapperElement = this.state.mapperProps.datatypes != null?		
+			<ExperimentComponent.Experiment acceptEdit={this.state.readyForMapping} datatypeProps={this.state.mapperProps} />:null;
+
+		var trainElement = this.state.readyForTraining?<input type="button" value="Train..."/>:null;
+		return(<div className="col-xs-10">
 		{alertElement}
-		<ExperimentComponent.Experiment showUpload={showUpload} datatypeProps={this.state.mapperProps} />
+		{uploadElement}
+		{mapperElement}
+		{trainElement}					
 		</div>)
 	}
 	

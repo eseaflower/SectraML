@@ -24,10 +24,13 @@ var ExperimentController = (function (_super) {
         var experimentData = ExperimentStore.Instance.getState();
         return {
             message: experimentData.message,
+            readyForTraining: experimentData.readyForTraining,
+            readyForMapping: experimentData.readyForMapping,
             mapperProps: {
                 availableTypes: experimentData.availableTypes,
                 examples: experimentData.examples,
-                datatypes: experimentData.datatypes
+                datatypes: experimentData.datatypes,
+                acceptEdit: experimentData.readyForMapping
             }
         };
     };
@@ -36,8 +39,11 @@ var ExperimentController = (function (_super) {
     };
     ExperimentController.prototype.render = function () {
         var alertElement = this.state.message != null ? React.createElement("div", {"className": "alert"}, this.state.message) : null;
-        var showUpload = this.state.mapperProps.datatypes == null;
-        return (React.createElement("div", null, alertElement, React.createElement(ExperimentComponent.Experiment, {"showUpload": showUpload, "datatypeProps": this.state.mapperProps})));
+        var uploadElement = this.state.mapperProps.datatypes == null ? React.createElement(ExperimentComponent.FileUploadComponent, null) : null;
+        var mapperElement = this.state.mapperProps.datatypes != null ?
+            React.createElement(ExperimentComponent.Experiment, {"acceptEdit": this.state.readyForMapping, "datatypeProps": this.state.mapperProps}) : null;
+        var trainElement = this.state.readyForTraining ? React.createElement("input", {"type": "button", "value": "Train..."}) : null;
+        return (React.createElement("div", {"className": "col-xs-10"}, alertElement, uploadElement, mapperElement, trainElement));
     };
     return ExperimentController;
 })(React.Component);
