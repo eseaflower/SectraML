@@ -10,6 +10,16 @@ def splitUpper(item):
     regexp = ' |\^|/|,|\.|\+|_|\(|\)|-'        
     return [u.upper() for u in re.split(regexp,  item)]
 
+
+
+def shingler(item):
+    shingleLength = 3
+    start = splitUpper(item)
+    string = ''.join(start)
+    if len(string) < shingleLength:
+        string = "{0}XXX".format(string)
+    return [string[i:i+shingleLength] for i in range(len(string) - shingleLength + 1 )]
+
 def getTermCount(featureMap, dataSet):
     termCount = dict()
     for item in dataSet:
@@ -135,7 +145,7 @@ class LabelMap(BagOfItemsMap):
         self._dimension = 1
         for key, value in self.dictionary.items():
             self.inverseDictionary[value] = key
-
+    
     def map(self, item):
         result = np.zeros(self.dimension, dtype='float32')
         # Use the item index as value
@@ -208,6 +218,17 @@ class DictionaryField(FieldDescriptor):
     def build(self, dataSet):
         self.mapper.build(getCommonTerms(self.mapper, dataSet, self.minCount, self.maxSize))
 
+
+class ShingleField(FieldDescriptor):
+    def __init__(self, key, minCount = None, size = None):        
+        super().__init__(key, BagOfItemsMap(lambda x: x[key], shingler))            
+        self.minCount = minCount
+        self.maxSize = size
+    
+    def build(self, dataSet):
+        self.mapper.build(getCommonTerms(self.mapper, dataSet, self.minCount, self.maxSize))
+
+
 class NumberField(FieldDescriptor):
     def __init__(self, key, dimension):
         super().__init__(key, NumberMap(lambda x: x[key], lambda x: float(x)))
@@ -218,7 +239,6 @@ class NumberField(FieldDescriptor):
 class LabelField(FieldDescriptor):
     def __init__(self, key):
         super().__init__(key, LabelMap(lambda x: x[key], splitUpper))    
-    
     def build(self, dataSet):
         self.mapper.build(self.mapper.getUniqueValues(dataSet))
 
@@ -245,19 +265,28 @@ class ItemMapperBuilder(object):
         result = None
         type = field["type"]
         key = field["key"]        
-        
+        custom = field.get("custom", {})
         if type == "BagOfItems":            
-            minCount = field.get("minCount")
+            minCount = custom.get("minCount")
             if minCount:
                 minCount = int(minCount)
-            size = field.get("size")
+            size = custom.get("size")
             if size:
                 size = int(size)
             result = DictionaryField(key, minCount, size)
+        elif type == "BagOfShingles":
+            minCount = custom.get("minCount")
+            if minCount:
+                minCount = int(minCount)
+            size = custom.get("size")
+            if size:
+                size = int(size)
+            result = ShingleField(key, minCount, size)
         elif type == "Number":
-            dim = int(field["dim"])
+            dim = int(custom["dim"])
             result = NumberField(key, dim)
         elif type == "Label":
+            #filter = custom.get("filter", None)
             result = LabelField(key)        
         else:
             raise NotImplementedError()

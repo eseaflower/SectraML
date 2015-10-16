@@ -36,7 +36,7 @@ var TypedXHR = (function () {
     TypedXHR.prototype.done = function (callback) {
         return new TypedXHR(this.wrapped.done(function (data, textStatus, jqXHR) {
             var deserialized = null;
-            if (data !== null) {
+            if ((data !== null) && (data.length > 0)) {
                 deserialized = JSON.parse(data);
             }
             callback(deserialized, textStatus, jqXHR);

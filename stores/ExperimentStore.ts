@@ -7,9 +7,13 @@ export interface IExperimentStoreState {
 	examples:string[][];
 	message:string;
 	datatypes:Actions.IDataType[];
+	hiddenLayers:number[];
 	availableTypes:string[];
+	example:{[key:string]:string};
+	predicted:string;
 	readyForMapping:boolean;
 	readyForTraining:boolean;	
+	readyForNetwork:boolean;
 }
 
 export class ExperimentStore extends Base.BaseStore {
@@ -23,8 +27,12 @@ export class ExperimentStore extends Base.BaseStore {
 			message:null, 
 			datatypes:null, 
 			availableTypes:null, 
+			hiddenLayers:null,
+			example:null,
+			predicted:null,
 			readyForTraining:false,
-			readyForMapping:false
+			readyForMapping:false,
+			readyForNetwork:false
 		};
 		this.experimentUrl = null;
 		this.fileUploadUrl = null;
@@ -36,6 +44,12 @@ export class ExperimentStore extends Base.BaseStore {
 		this.dispatcher.register<string>(Actions.Experiment.UPLOAD_DATATYPES_FAILED, (_)=>this.uploadDataTypesFailed(_));			
 		this.dispatcher.register<string>(Actions.User.USER_ID_SET, (_)=>this.userChanged(_));
 		this.dispatcher.register<Actions.IDataType>(Actions.Experiment.DATATYPES_CHANGED, (_)=>this.datatypesChanged(_));
+		this.dispatcher.register<number[]>(Actions.Experiment.LAYERS_CHANGED, (_)=>this.layersChanged(_));
+		this.dispatcher.register(Actions.Experiment.COMMIT_TRAINING, () => this.trainingCommited());
+		this.dispatcher.register(Actions.Experiment.TRAINING_COMPLETE, ()=> this.trainingComplete());
+		this.dispatcher.register<{column:string, value:string}>(Actions.Experiment.EXAMPLE_CHANGED, (_)=>this.exampleChanged(_));
+		this.dispatcher.register(Actions.Experiment.COMMIT_PREDICT, ()=>this.predictCommited());
+		this.dispatcher.register<string>(Actions.Experiment.PREDICT_COMPLETE, (_)=>this.predictCompleted(_));	
 	}	
 	
 	public getState():IExperimentStoreState {		
@@ -51,14 +65,16 @@ export class ExperimentStore extends Base.BaseStore {
 	}
 	private uploadCompleted(data:Actions.IUploadData) {		
 		this.state.examples = data.rows;		
+		var custom:{[key:string]:string} = {};
 		this.state.datatypes = data.columns.map(column => {
-			return {column:column, datatype:data.availableTypes[0], custom:<{[key:string]:string}>{}}
+			return {column:column, datatype:data.availableTypes[0], custom:custom}
 		});
 		this.state.availableTypes = data.availableTypes;
 		this.experimentUrl = "/experiment/" + data.id.toString();
 		this.state.message = null;
 		this.state.readyForMapping = true;
-		this.state.readyForTraining = false;
+		this.state.readyForNetwork = false;
+		this.state.readyForTraining = false;				
 		this.emitChange();
 	}
 	private uploadFailed(message:string) {		
@@ -75,8 +91,13 @@ export class ExperimentStore extends Base.BaseStore {
 	
 	private uploadDataTypesCompleted(data:Actions.IDataType[]) {
 		this.state.datatypes = data;
-		this.state.readyForMapping = true;
+		this.state.readyForMapping = true;		
+		this.state.readyForNetwork = true;		
 		this.state.readyForTraining = true;
+		if (this.state.hiddenLayers == null) {
+			this.state.hiddenLayers = [];				
+		} 
+		//this.updateTrainingReady();		
 		this.emitChange();
 	}
 	private uploadDataTypesFailed(message:string) {
@@ -102,6 +123,73 @@ export class ExperimentStore extends Base.BaseStore {
 		this.emitChange();	
 	}
 	
+	private layersChanged(data:number[]) {
+		this.state.hiddenLayers = data;		
+		//this.updateTrainingReady();
+		this.emitChange();	
+	}
+	
+	private updateTrainingReady() {
+		var ready = false;		 
+		if (this.state.hiddenLayers != null) {
+			var nodeCount = 0;
+			this.state.hiddenLayers.map(i => nodeCount += i);
+			ready = nodeCount > 0;		
+		}
+		if (ready != this.state.readyForTraining) {
+			this.state.readyForTraining = ready;			
+			return true;	
+		}
+		return false;
+	}
+	
+	private trainingCommited() {
+		// Gather network/training parameters and do training.
+		if (this.experimentUrl != null) {
+			this.state.readyForMapping = false;
+			this.state.readyForNetwork = false;
+			this.state.readyForTraining = false;
+			this.state.example = null;
+			var layers = this.state.hiddenLayers != null?this.state.hiddenLayers:[];
+			Actions.Experiment.DoTraining(this.experimentUrl, {hiddenLayers:layers});
+			this.emitChange();
+		}
+	}
+	
+	private trainingComplete() {
+		this.state.example = {};
+		this.emitChange();
+		//alert("Completed training");
+		//Actions.Experiment.DoPredict(this.experimentUrl, [{Modality:"MG", Code:"32000"}]);
+	}
+	
+	private exampleChanged(val:{column:string, value:string}) {		
+		this.state.example[val.column] = val.value;	
+		this.state.predicted = null;	
+		this.emitChange();
+	}
+	
+	private predictCommited() {
+		if (this.experimentUrl != null) {
+			var toPredict:{[key:string]:string} = {};
+			this.state.datatypes.map(dt => {
+				if (dt.datatype != "Ignore" && dt.datatype != "Label") {
+					var value = this.state.example[dt.column];
+					if (value == null) {
+						value = "";
+					}
+					toPredict[dt.column] = value;
+				}				
+			});
+			
+			Actions.Experiment.DoPredict(this.experimentUrl, [toPredict]);
+			this.emitChange();			
+		}
+	}
+	private predictCompleted(value:string) {
+		this.state.predicted = value;
+		this.emitChange();
+	}
 }
 
 export var Instance = new ExperimentStore();

@@ -68,6 +68,14 @@ var _Experiment = (function () {
         this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
         this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
         this.DATATYPES_CHANGED = "DATATYPES_CHANGED";
+        this.LAYERS_CHANGED = "LAYERS_CHANGED";
+        this.COMMIT_TRAINING = "COMMIT_TRAINING";
+        this.TRAINING_COMPLETE = "TRAINING_COMPLETE";
+        this.TRAINING_FAILED = "TRAINING_FAILED";
+        this.EXAMPLE_CHANGED = "EXAMPLE_CHANGED";
+        this.COMMIT_PREDICT = "COMMIT_PREDICT";
+        this.PREDICT_COMPLETE = "PREDICT_COMPLETE";
+        this.PREDICT_FAILED = "PREDICT_FAILED";
     }
     _Experiment.prototype.CommitDatatypes = function () {
         AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: null });
@@ -89,6 +97,48 @@ var _Experiment = (function () {
     };
     _Experiment.prototype.DatatypeChanged = function (data) {
         AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_CHANGED, data: data });
+    };
+    _Experiment.prototype.LayersChanged = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.LAYERS_CHANGED, data: data });
+    };
+    _Experiment.prototype.CommitTraining = function () {
+        AppDispatcher.Dispatcher.dispatch({ type: this.COMMIT_TRAINING, data: null });
+    };
+    _Experiment.prototype.TrainingComplete = function (result) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.TRAINING_COMPLETE, data: result });
+    };
+    _Experiment.prototype.TrainingFailed = function (message) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.TRAINING_FAILED, data: message });
+    };
+    _Experiment.prototype.DoTraining = function (url, params) {
+        var _this = this;
+        Ajax.postJson(url, { type: "train", data: params }).
+            done(function (_) { return _this.TrainingComplete(_); }).
+            fail(function (xhr, status, err) {
+            var message = ["Training failed:", xhr.status.toString(), xhr.statusText].join(' ');
+            _this.TrainingFailed(message);
+        });
+    };
+    _Experiment.prototype.PredictComplete = function (result) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.PREDICT_COMPLETE, data: result });
+    };
+    _Experiment.prototype.PredictFailed = function (message) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.PREDICT_FAILED, data: message });
+    };
+    _Experiment.prototype.DoPredict = function (url, data) {
+        var _this = this;
+        Ajax.postJson(url, { type: "predict", data: data }).
+            done(function (_) { return _this.PredictComplete(_); }).
+            fail(function (xhr, status, err) {
+            var message = ["Prediction failed:", xhr.status.toString(), xhr.statusText].join(' ');
+            _this.PredictFailed(message);
+        });
+    };
+    _Experiment.prototype.ExampleChanged = function (val) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.EXAMPLE_CHANGED, data: val });
+    };
+    _Experiment.prototype.CommitPredict = function () {
+        AppDispatcher.Dispatcher.dispatch({ type: this.COMMIT_PREDICT, data: null });
     };
     return _Experiment;
 })();
@@ -227,6 +277,9 @@ var DatatypeComponent = (function (_super) {
             case "BagOfItems":
                 return this.getBagOfItemsElements();
                 break;
+            case "BagOfShingles":
+                return this.getBagOfItemsElements();
+                break;
             case "Number":
                 return this.getNumberElements();
                 break;
@@ -248,33 +301,119 @@ var DatatypeMapperTable = (function (_super) {
     function DatatypeMapperTable() {
         _super.apply(this, arguments);
     }
+    DatatypeMapperTable.prototype.handleCreateMapper = function () {
+        if (this.props.acceptEdit) {
+            Actions.Experiment.CommitDatatypes();
+        }
+    };
     DatatypeMapperTable.prototype.getDatatypes = function () {
         var _this = this;
         return this.props.datatypes.map(function (dt) { return React.createElement(DatatypeComponent, {"type": dt, "availableTypes": _this.props.availableTypes}); });
     };
     DatatypeMapperTable.prototype.render = function () {
+        var _this = this;
         var headers = this.props.datatypes.map(function (dt) { return dt.column; });
-        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), this.getDatatypes()));
+        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), React.createElement("h4", null, "Datatype mapping"), this.getDatatypes(), React.createElement("input", {"type": "button", "disabled": !this.props.acceptEdit, "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
     };
     return DatatypeMapperTable;
 })(React.Component);
-var Experiment = (function (_super) {
-    __extends(Experiment, _super);
-    function Experiment() {
+exports.DatatypeMapperTable = DatatypeMapperTable;
+var LayerComponent = (function (_super) {
+    __extends(LayerComponent, _super);
+    function LayerComponent() {
         _super.apply(this, arguments);
     }
-    Experiment.prototype.handleCreateMapper = function () {
-        if (this.props.acceptEdit) {
-            Actions.Experiment.CommitDatatypes();
+    LayerComponent.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("input", {"onChange": function () { return _this.props.onChange(); }, "type": "text"}))));
+    };
+    return LayerComponent;
+})(React.Component);
+var NetworkComponent = (function (_super) {
+    __extends(NetworkComponent, _super);
+    function NetworkComponent() {
+        _super.apply(this, arguments);
+    }
+    NetworkComponent.prototype.handleChange = function (index) {
+        var refId = "l_" + index.toString();
+        var c = this.refs[refId];
+        var value = c.getDOMNode().value;
+        var numValue = Number(value);
+        if (!isNaN(numValue)) {
+            var copy = this.props.hiddenLayers.slice();
+            copy[index] = numValue;
+            Actions.Experiment.LayersChanged(copy);
         }
     };
-    Experiment.prototype.render = function () {
+    NetworkComponent.prototype.getLayerElement = function (index) {
         var _this = this;
-        return (React.createElement("div", null, React.createElement(DatatypeMapperTable, React.__spread({}, this.props.datatypeProps)), React.createElement("input", {"type": "button", "disabled": !this.props.acceptEdit, "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
+        var refId = "l_" + index.toString();
+        var value = this.props.hiddenLayers[index].toString();
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("input", {"ref": refId, "onChange": function () { return _this.handleChange(index); }, "type": "text", "value": value}))));
     };
-    return Experiment;
+    NetworkComponent.prototype.getLayerElements = function () {
+        var _this = this;
+        var elements = [];
+        if (this.props.hiddenLayers != null) {
+            for (var i = 0; i < this.props.hiddenLayers.length; i++) {
+                elements.push(this.getLayerElement(i));
+            }
+        }
+        var addElement = (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-offset-1 col-xs-1"}, React.createElement("input", {"onClick": function () { return _this.addLayer(); }, "type": "button", "value": "Add..."}))));
+        elements.push(addElement);
+        return elements;
+    };
+    NetworkComponent.prototype.addLayer = function () {
+        var copy = this.props.hiddenLayers.slice();
+        copy.push(0);
+        Actions.Experiment.LayersChanged(copy);
+    };
+    NetworkComponent.prototype.render = function () {
+        return (React.createElement("div", null, React.createElement("h4", null, "Hidden layers"), this.getLayerElements()));
+    };
+    return NetworkComponent;
 })(React.Component);
-exports.Experiment = Experiment;
+exports.NetworkComponent = NetworkComponent;
+var PredictComponent = (function (_super) {
+    __extends(PredictComponent, _super);
+    function PredictComponent() {
+        _super.apply(this, arguments);
+    }
+    PredictComponent.prototype.getColumnHeaders = function () {
+        var headers = this.getValidColumns().map(function (dt) { return React.createElement("th", null, dt.column); });
+        headers.push(React.createElement("th", null, "Predicted"));
+        return headers;
+    };
+    PredictComponent.prototype.exampleChanged = function (refId) {
+        var c = this.refs[refId];
+        var value = c.getDOMNode().value;
+        Actions.Experiment.ExampleChanged({ column: refId, value: value });
+    };
+    PredictComponent.prototype.getExample = function () {
+        var _this = this;
+        var cells = this.getValidColumns().map(function (dt) { return React.createElement("td", null, React.createElement("input", {"value": _this.props.example[dt.column], "onChange": function () { return _this.exampleChanged(dt.column); }, "ref": dt.column, "type": "text"})); });
+        cells.push(React.createElement("td", null, this.props.predicted));
+        return cells;
+    };
+    PredictComponent.prototype.getValidColumns = function () {
+        var validColumns = [];
+        this.props.datatypes.map(function (dt) {
+            if (dt.datatype != "Ignore" && dt.datatype != "Label") {
+                validColumns.push(dt);
+            }
+        });
+        return validColumns;
+    };
+    PredictComponent.prototype.commitPredict = function () {
+        Actions.Experiment.CommitPredict();
+    };
+    PredictComponent.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", null, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, this.getColumnHeaders())), React.createElement("tbody", null, this.getExample())), React.createElement("input", {"type": "button", "onClick": function () { return _this.commitPredict(); }, "value": "Predict..."})));
+    };
+    return PredictComponent;
+})(React.Component);
+exports.PredictComponent = PredictComponent;
 
 },{"../actions/actions":1,"react":166}],3:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
@@ -285,6 +424,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var React = require("react");
 var ExperimentStore = require("../stores/ExperimentStore");
 var ExperimentComponent = require("./Experiment");
+var Actions = require("../actions/actions");
 var ExperimentController = (function (_super) {
     __extends(ExperimentController, _super);
     function ExperimentController(props, context) {
@@ -305,30 +445,49 @@ var ExperimentController = (function (_super) {
             message: experimentData.message,
             readyForTraining: experimentData.readyForTraining,
             readyForMapping: experimentData.readyForMapping,
+            readyForNetwork: experimentData.readyForNetwork,
             mapperProps: {
                 availableTypes: experimentData.availableTypes,
                 examples: experimentData.examples,
                 datatypes: experimentData.datatypes,
                 acceptEdit: experimentData.readyForMapping
+            },
+            networkProps: {
+                hiddenLayers: experimentData.hiddenLayers,
+                acceptEdit: experimentData.readyForNetwork
+            },
+            predictProps: {
+                datatypes: experimentData.datatypes,
+                example: experimentData.example,
+                predicted: experimentData.predicted,
+                acceptEdit: true
             }
         };
     };
     ExperimentController.prototype.onChange = function () {
         this.setState(this.buildState());
     };
+    ExperimentController.prototype.doTrain = function () {
+        Actions.Experiment.CommitTraining();
+    };
     ExperimentController.prototype.render = function () {
+        var _this = this;
         var alertElement = this.state.message != null ? React.createElement("div", {"className": "alert"}, this.state.message) : null;
         var uploadElement = this.state.mapperProps.datatypes == null ? React.createElement(ExperimentComponent.FileUploadComponent, null) : null;
         var mapperElement = this.state.mapperProps.datatypes != null ?
-            React.createElement(ExperimentComponent.Experiment, {"acceptEdit": this.state.readyForMapping, "datatypeProps": this.state.mapperProps}) : null;
-        var trainElement = this.state.readyForTraining ? React.createElement("input", {"type": "button", "value": "Train..."}) : null;
-        return (React.createElement("div", {"className": "col-xs-10"}, alertElement, uploadElement, mapperElement, trainElement));
+            React.createElement(ExperimentComponent.DatatypeMapperTable, React.__spread({}, this.state.mapperProps)) : null;
+        var networkElement = this.state.networkProps.hiddenLayers != null ?
+            React.createElement(ExperimentComponent.NetworkComponent, React.__spread({}, this.state.networkProps)) : null;
+        var trainElement = this.state.readyForTraining ? React.createElement("input", {"type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        var predictElement = this.state.predictProps.example != null ?
+            React.createElement(ExperimentComponent.PredictComponent, React.__spread({}, this.state.predictProps)) : null;
+        return (React.createElement("div", {"className": "col-xs-10"}, alertElement, uploadElement, mapperElement, networkElement, trainElement, predictElement));
     };
     return ExperimentController;
 })(React.Component);
 exports.ExperimentController = ExperimentController;
 
-},{"../stores/ExperimentStore":169,"./Experiment":2,"react":166}],4:[function(require,module,exports){
+},{"../actions/actions":1,"../stores/ExperimentStore":169,"./Experiment":2,"react":166}],4:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -20881,7 +21040,7 @@ var TypedXHR = (function () {
     TypedXHR.prototype.done = function (callback) {
         return new TypedXHR(this.wrapped.done(function (data, textStatus, jqXHR) {
             var deserialized = null;
-            if (data !== null) {
+            if ((data !== null) && (data.length > 0)) {
                 deserialized = JSON.parse(data);
             }
             callback(deserialized, textStatus, jqXHR);
@@ -20957,8 +21116,12 @@ var ExperimentStore = (function (_super) {
             message: null,
             datatypes: null,
             availableTypes: null,
+            hiddenLayers: null,
+            example: null,
+            predicted: null,
             readyForTraining: false,
-            readyForMapping: false
+            readyForMapping: false,
+            readyForNetwork: false
         };
         this.experimentUrl = null;
         this.fileUploadUrl = null;
@@ -20970,6 +21133,12 @@ var ExperimentStore = (function (_super) {
         this.dispatcher.register(Actions.Experiment.UPLOAD_DATATYPES_FAILED, function (_) { return _this.uploadDataTypesFailed(_); });
         this.dispatcher.register(Actions.User.USER_ID_SET, function (_) { return _this.userChanged(_); });
         this.dispatcher.register(Actions.Experiment.DATATYPES_CHANGED, function (_) { return _this.datatypesChanged(_); });
+        this.dispatcher.register(Actions.Experiment.LAYERS_CHANGED, function (_) { return _this.layersChanged(_); });
+        this.dispatcher.register(Actions.Experiment.COMMIT_TRAINING, function () { return _this.trainingCommited(); });
+        this.dispatcher.register(Actions.Experiment.TRAINING_COMPLETE, function () { return _this.trainingComplete(); });
+        this.dispatcher.register(Actions.Experiment.EXAMPLE_CHANGED, function (_) { return _this.exampleChanged(_); });
+        this.dispatcher.register(Actions.Experiment.COMMIT_PREDICT, function () { return _this.predictCommited(); });
+        this.dispatcher.register(Actions.Experiment.PREDICT_COMPLETE, function (_) { return _this.predictCompleted(_); });
     }
     ExperimentStore.prototype.getState = function () {
         return $.extend({}, this.state);
@@ -20983,13 +21152,15 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.uploadCompleted = function (data) {
         this.state.examples = data.rows;
+        var custom = {};
         this.state.datatypes = data.columns.map(function (column) {
-            return { column: column, datatype: data.availableTypes[0], custom: {} };
+            return { column: column, datatype: data.availableTypes[0], custom: custom };
         });
         this.state.availableTypes = data.availableTypes;
         this.experimentUrl = "/experiment/" + data.id.toString();
         this.state.message = null;
         this.state.readyForMapping = true;
+        this.state.readyForNetwork = false;
         this.state.readyForTraining = false;
         this.emitChange();
     };
@@ -21007,7 +21178,11 @@ var ExperimentStore = (function (_super) {
     ExperimentStore.prototype.uploadDataTypesCompleted = function (data) {
         this.state.datatypes = data;
         this.state.readyForMapping = true;
+        this.state.readyForNetwork = true;
         this.state.readyForTraining = true;
+        if (this.state.hiddenLayers == null) {
+            this.state.hiddenLayers = [];
+        }
         this.emitChange();
     };
     ExperimentStore.prototype.uploadDataTypesFailed = function (message) {
@@ -21026,6 +21201,64 @@ var ExperimentStore = (function (_super) {
     ExperimentStore.prototype.datatypesChanged = function (data) {
         this.state.datatypes = this.state.datatypes.map(function (dt) { return (dt.column == data.column) ? data : dt; });
         this.state.readyForTraining = false;
+        this.emitChange();
+    };
+    ExperimentStore.prototype.layersChanged = function (data) {
+        this.state.hiddenLayers = data;
+        this.emitChange();
+    };
+    ExperimentStore.prototype.updateTrainingReady = function () {
+        var ready = false;
+        if (this.state.hiddenLayers != null) {
+            var nodeCount = 0;
+            this.state.hiddenLayers.map(function (i) { return nodeCount += i; });
+            ready = nodeCount > 0;
+        }
+        if (ready != this.state.readyForTraining) {
+            this.state.readyForTraining = ready;
+            return true;
+        }
+        return false;
+    };
+    ExperimentStore.prototype.trainingCommited = function () {
+        if (this.experimentUrl != null) {
+            this.state.readyForMapping = false;
+            this.state.readyForNetwork = false;
+            this.state.readyForTraining = false;
+            this.state.example = null;
+            var layers = this.state.hiddenLayers != null ? this.state.hiddenLayers : [];
+            Actions.Experiment.DoTraining(this.experimentUrl, { hiddenLayers: layers });
+            this.emitChange();
+        }
+    };
+    ExperimentStore.prototype.trainingComplete = function () {
+        this.state.example = {};
+        this.emitChange();
+    };
+    ExperimentStore.prototype.exampleChanged = function (val) {
+        this.state.example[val.column] = val.value;
+        this.state.predicted = null;
+        this.emitChange();
+    };
+    ExperimentStore.prototype.predictCommited = function () {
+        var _this = this;
+        if (this.experimentUrl != null) {
+            var toPredict = {};
+            this.state.datatypes.map(function (dt) {
+                if (dt.datatype != "Ignore" && dt.datatype != "Label") {
+                    var value = _this.state.example[dt.column];
+                    if (value == null) {
+                        value = "";
+                    }
+                    toPredict[dt.column] = value;
+                }
+            });
+            Actions.Experiment.DoPredict(this.experimentUrl, [toPredict]);
+            this.emitChange();
+        }
+    };
+    ExperimentStore.prototype.predictCompleted = function (value) {
+        this.state.predicted = value;
         this.emitChange();
     };
     return ExperimentStore;

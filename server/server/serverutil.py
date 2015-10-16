@@ -22,7 +22,8 @@ def jsonreturn(member):
         # Write response in json
         if returnData:
             jsonReturnData = json.dumps(returnData)
-            self.write(jsonReturnData)        
+            self.write(jsonReturnData)
+        self.finish()
     return inner
 
 def jsonmethod(member):

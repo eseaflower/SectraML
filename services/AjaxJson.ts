@@ -46,7 +46,7 @@ export class TypedXHR<T> {
 		return new TypedXHR<T>(this.wrapped.done(
 			(data?:string, textStatus?:string, jqXHR?:JQueryXHR)=> {
 				var deserialized:T = null;
-				if (data !== null) {
+				if ((data !== null) && (data.length > 0)) {
 					deserialized = JSON.parse(data);
 				}				 							
 				callback(deserialized, textStatus, jqXHR);

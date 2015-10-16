@@ -52,14 +52,6 @@ class ExampleTableComponent extends React.Component<IExampleTableProps, {}>{
 }
 
 
-export interface IDatatypeMapperTableProps {	
-	availableTypes:string[];
-	datatypes:Actions.IDataType[];
-	examples:string[][];
-	acceptEdit:boolean;
-}
-
-
 export interface IDatatypeProps {
 	type:Actions.IDataType;
 	availableTypes:string[];
@@ -150,6 +142,9 @@ class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
 			case "BagOfItems":								
 				return this.getBagOfItemsElements();
 				break;
+			case "BagOfShingles":								
+				return this.getBagOfItemsElements();
+				break;				
 			case "Number":
 				return this.getNumberElements();
 				break;
@@ -180,8 +175,19 @@ class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
 }
 
 
+export interface IDatatypeMapperTableProps {	
+	availableTypes:string[];
+	datatypes:Actions.IDataType[];
+	examples:string[][];
+	acceptEdit:boolean;
+}
 
-class DatatypeMapperTable extends React.Component<IDatatypeMapperTableProps, {}> {
+export class DatatypeMapperTable extends React.Component<IDatatypeMapperTableProps, {}> {
+	private handleCreateMapper() {
+		if (this.props.acceptEdit) {
+			Actions.Experiment.CommitDatatypes();
+		}
+	}
 	
 	private getDatatypes():JSX.Element[] {
 		return this.props.datatypes.map(dt => <DatatypeComponent type={dt} availableTypes={this.props.availableTypes} />)
@@ -191,31 +197,140 @@ class DatatypeMapperTable extends React.Component<IDatatypeMapperTableProps, {}>
 		var headers = this.props.datatypes.map(dt => dt.column);
 		return (<div>						
 				<ExampleTableComponent headers={headers} examples={this.props.examples}/>
+				<h4>Datatype mapping</h4>
 				{this.getDatatypes()}				
+				<input type="button" disabled={!this.props.acceptEdit} value="Create.." onClick={() => this.handleCreateMapper()}/>
 				</div>
 			)
 	}	
 }
 
 
-export interface IExperimentProps {				
-	datatypeProps:IDatatypeMapperTableProps;
+export interface INetworkProps {
+	hiddenLayers:number[];
 	acceptEdit:boolean;
 }
 
 
-export class Experiment extends React.Component<IExperimentProps, {}> {
+interface ILayerProps {
+	count:number;
+	onChange:()=>void;
+}
+
+class LayerComponent extends React.Component<ILayerProps, {}> {
 		
-	private handleCreateMapper() {
-		if (this.props.acceptEdit) {
-			Actions.Experiment.CommitDatatypes();
-		}
+	public render():JSX.Element {
+		return (<div className="row">
+		<div className="col-xs-1"><label>Nodes:</label></div>
+		<div className="col-xs-1"><input onChange={() => this.props.onChange()} type="text"/></div>
+		</div>)
 	}
+}
+
+export class NetworkComponent extends React.Component<INetworkProps, {}> {
 			
+	private handleChange(index:number) {
+		var refId = "l_"+index.toString();				
+		var c = this.refs[refId] as React.ClassicComponent<any, any>;			 
+		var value = c.getDOMNode<HTMLInputElement>().value;					
+		var numValue = Number(value);	
+		if (!isNaN(numValue)) {
+			var copy:number[] = [...this.props.hiddenLayers];			
+			copy[index] = numValue;
+			Actions.Experiment.LayersChanged(copy);
+		}	
+	}
+	
+	private getLayerElement(index:number):JSX.Element {
+		var refId = "l_"+index.toString();
+		var value = this.props.hiddenLayers[index].toString();
+		return (<div className="row">
+			<div className="col-xs-1"><label>Nodes:</label></div>
+			<div className="col-xs-1"><input ref={refId} onChange={() => this.handleChange(index)} type="text" value={value} /></div>
+		</div>);	
+	}
+	
+	private getLayerElements():JSX.Element[] {
+		var elements:JSX.Element[] = []
+		if (this.props.hiddenLayers != null) {
+			for (var i=0;i<this.props.hiddenLayers.length;i++) {				 
+				elements.push(this.getLayerElement(i));								
+			}
+		}
+		var addElement =(<div className="row"><div className="col-xs-offset-1 col-xs-1"><input onClick={() => this.addLayer()} type="button" value="Add..."/></div></div>); 
+		elements.push(addElement);
+		return elements;
+	}
+	
+	private addLayer() {
+		var copy = [...this.props.hiddenLayers];
+		copy.push(0)			
+		Actions.Experiment.LayersChanged(copy);	
+	}
+		
+	public render():JSX.Element {
+		return (<div>			
+			<h4>Hidden layers</h4>
+			{this.getLayerElements()}						
+		</div>)
+	}
+}
+
+
+export interface IPredictProps {
+	datatypes:Actions.IDataType[];
+	example:{[key:string]:string};
+	predicted:string;
+	acceptEdit:boolean;
+}
+export class PredictComponent extends React.Component<IPredictProps, {}> {
+	
+	private getColumnHeaders():JSX.Element[] {
+		var headers = this.getValidColumns().map(dt => <th>{dt.column}</th>);
+		headers.push(<th>Predicted</th>);
+		return headers;		
+	}
+	
+	private exampleChanged(refId:string) {
+		var c = this.refs[refId] as React.ClassicComponent<any, any>;			 
+		var value = c.getDOMNode<HTMLInputElement>().value;					
+		Actions.Experiment.ExampleChanged({column:refId, value:value});		
+	}
+	
+	private getExample():JSX.Element[] {
+		var cells = this.getValidColumns().map(dt => <td><input value={this.props.example[dt.column]} onChange={() => this.exampleChanged(dt.column)} ref={dt.column} type="text"/></td>)
+		cells.push(<td>{this.props.predicted}</td>);
+		return cells;
+	}
+	
+	private getValidColumns():Actions.IDataType[] {
+		var validColumns:Actions.IDataType[] = [];
+		this.props.datatypes.map(dt =>{
+			if (dt.datatype != "Ignore" && dt.datatype != "Label") {
+				validColumns.push(dt);
+			}
+		});
+		return validColumns;
+	}
+	
+	private commitPredict() {
+		Actions.Experiment.CommitPredict();
+	}
+	
 	public render():JSX.Element {
 		return (<div>
-		<DatatypeMapperTable {...this.props.datatypeProps}/>
-		<input type="button" disabled={!this.props.acceptEdit} value="Create.." onClick={() => this.handleCreateMapper()}/>
-		</div>)		
+			<table className="table table-striped">
+			<thead>
+				<tr>
+				{this.getColumnHeaders()}
+				</tr>
+			</thead>
+			<tbody>
+			{this.getExample()}
+			</tbody>
+			</table>
+			<input type="button" onClick={()=>this.commitPredict()} value="Predict..."/>
+			</div>);								
+		
 	}
 }

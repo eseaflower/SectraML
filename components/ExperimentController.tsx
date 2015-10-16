@@ -7,9 +7,12 @@ import Actions = require("../actions/actions")
 
 export interface IExperimentControllerProps {
 	mapperProps:ExperimentComponent.IDatatypeMapperTableProps;
+	networkProps:ExperimentComponent.INetworkProps;
 	message:string;
+	predictProps:ExperimentComponent.IPredictProps;
 	readyForTraining:boolean;	
 	readyForMapping:boolean;
+	readyForNetwork:boolean;
 }
 
 export class ExperimentController extends React.Component<{}, IExperimentControllerProps> {
@@ -34,11 +37,22 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 			message: experimentData.message,
 			readyForTraining: experimentData.readyForTraining,
 			readyForMapping: experimentData.readyForMapping,
+			readyForNetwork:experimentData.readyForNetwork,			
 			mapperProps: {
 				availableTypes:experimentData.availableTypes,
 				examples: experimentData.examples,
 				datatypes:experimentData.datatypes,
 				acceptEdit:experimentData.readyForMapping
+			},
+			networkProps: {
+				hiddenLayers:experimentData.hiddenLayers,
+				acceptEdit:experimentData.readyForNetwork
+			},
+			predictProps: {
+				datatypes:experimentData.datatypes,
+				example:experimentData.example,
+				predicted:experimentData.predicted,
+				acceptEdit:true
 			}
 		};
 	}
@@ -47,18 +61,31 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 		this.setState(this.buildState());
 	}
 	
+	private doTrain() {
+		Actions.Experiment.CommitTraining();
+	}
+	
 	public render():JSX.Element {
 		var alertElement = this.state.message != null?<div className="alert">{this.state.message}</div>:null		
 		var uploadElement = this.state.mapperProps.datatypes == null?<ExperimentComponent.FileUploadComponent/>:null;
 		var mapperElement = this.state.mapperProps.datatypes != null?		
-			<ExperimentComponent.Experiment acceptEdit={this.state.readyForMapping} datatypeProps={this.state.mapperProps} />:null;
+			<ExperimentComponent.DatatypeMapperTable {...this.state.mapperProps} />:null;
+			
+		var networkElement = this.state.networkProps.hiddenLayers != null?
+			<ExperimentComponent.NetworkComponent {...this.state.networkProps}/>:null;
 
-		var trainElement = this.state.readyForTraining?<input type="button" value="Train..."/>:null;
+		var trainElement = this.state.readyForTraining?<input type="button" onClick={()=>this.doTrain()} value="Train..."/>:null;
+		
+		var predictElement = this.state.predictProps.example != null?
+			<ExperimentComponent.PredictComponent {...this.state.predictProps}/>:null;
+		
 		return(<div className="col-xs-10">
 		{alertElement}
 		{uploadElement}
 		{mapperElement}
-		{trainElement}					
+		{networkElement}
+		{trainElement}
+		{predictElement}					
 		</div>)
 	}
 	

@@ -120,6 +120,9 @@ var DatatypeComponent = (function (_super) {
             case "BagOfItems":
                 return this.getBagOfItemsElements();
                 break;
+            case "BagOfShingles":
+                return this.getBagOfItemsElements();
+                break;
             case "Number":
                 return this.getNumberElements();
                 break;
@@ -141,30 +144,116 @@ var DatatypeMapperTable = (function (_super) {
     function DatatypeMapperTable() {
         _super.apply(this, arguments);
     }
+    DatatypeMapperTable.prototype.handleCreateMapper = function () {
+        if (this.props.acceptEdit) {
+            Actions.Experiment.CommitDatatypes();
+        }
+    };
     DatatypeMapperTable.prototype.getDatatypes = function () {
         var _this = this;
         return this.props.datatypes.map(function (dt) { return React.createElement(DatatypeComponent, {"type": dt, "availableTypes": _this.props.availableTypes}); });
     };
     DatatypeMapperTable.prototype.render = function () {
+        var _this = this;
         var headers = this.props.datatypes.map(function (dt) { return dt.column; });
-        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), this.getDatatypes()));
+        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), React.createElement("h4", null, "Datatype mapping"), this.getDatatypes(), React.createElement("input", {"type": "button", "disabled": !this.props.acceptEdit, "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
     };
     return DatatypeMapperTable;
 })(React.Component);
-var Experiment = (function (_super) {
-    __extends(Experiment, _super);
-    function Experiment() {
+exports.DatatypeMapperTable = DatatypeMapperTable;
+var LayerComponent = (function (_super) {
+    __extends(LayerComponent, _super);
+    function LayerComponent() {
         _super.apply(this, arguments);
     }
-    Experiment.prototype.handleCreateMapper = function () {
-        if (this.props.acceptEdit) {
-            Actions.Experiment.CommitDatatypes();
+    LayerComponent.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("input", {"onChange": function () { return _this.props.onChange(); }, "type": "text"}))));
+    };
+    return LayerComponent;
+})(React.Component);
+var NetworkComponent = (function (_super) {
+    __extends(NetworkComponent, _super);
+    function NetworkComponent() {
+        _super.apply(this, arguments);
+    }
+    NetworkComponent.prototype.handleChange = function (index) {
+        var refId = "l_" + index.toString();
+        var c = this.refs[refId];
+        var value = c.getDOMNode().value;
+        var numValue = Number(value);
+        if (!isNaN(numValue)) {
+            var copy = this.props.hiddenLayers.slice();
+            copy[index] = numValue;
+            Actions.Experiment.LayersChanged(copy);
         }
     };
-    Experiment.prototype.render = function () {
+    NetworkComponent.prototype.getLayerElement = function (index) {
         var _this = this;
-        return (React.createElement("div", null, React.createElement(DatatypeMapperTable, React.__spread({}, this.props.datatypeProps)), React.createElement("input", {"type": "button", "disabled": !this.props.acceptEdit, "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
+        var refId = "l_" + index.toString();
+        var value = this.props.hiddenLayers[index].toString();
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("input", {"ref": refId, "onChange": function () { return _this.handleChange(index); }, "type": "text", "value": value}))));
     };
-    return Experiment;
+    NetworkComponent.prototype.getLayerElements = function () {
+        var _this = this;
+        var elements = [];
+        if (this.props.hiddenLayers != null) {
+            for (var i = 0; i < this.props.hiddenLayers.length; i++) {
+                elements.push(this.getLayerElement(i));
+            }
+        }
+        var addElement = (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-offset-1 col-xs-1"}, React.createElement("input", {"onClick": function () { return _this.addLayer(); }, "type": "button", "value": "Add..."}))));
+        elements.push(addElement);
+        return elements;
+    };
+    NetworkComponent.prototype.addLayer = function () {
+        var copy = this.props.hiddenLayers.slice();
+        copy.push(0);
+        Actions.Experiment.LayersChanged(copy);
+    };
+    NetworkComponent.prototype.render = function () {
+        return (React.createElement("div", null, React.createElement("h4", null, "Hidden layers"), this.getLayerElements()));
+    };
+    return NetworkComponent;
 })(React.Component);
-exports.Experiment = Experiment;
+exports.NetworkComponent = NetworkComponent;
+var PredictComponent = (function (_super) {
+    __extends(PredictComponent, _super);
+    function PredictComponent() {
+        _super.apply(this, arguments);
+    }
+    PredictComponent.prototype.getColumnHeaders = function () {
+        var headers = this.getValidColumns().map(function (dt) { return React.createElement("th", null, dt.column); });
+        headers.push(React.createElement("th", null, "Predicted"));
+        return headers;
+    };
+    PredictComponent.prototype.exampleChanged = function (refId) {
+        var c = this.refs[refId];
+        var value = c.getDOMNode().value;
+        Actions.Experiment.ExampleChanged({ column: refId, value: value });
+    };
+    PredictComponent.prototype.getExample = function () {
+        var _this = this;
+        var cells = this.getValidColumns().map(function (dt) { return React.createElement("td", null, React.createElement("input", {"value": _this.props.example[dt.column], "onChange": function () { return _this.exampleChanged(dt.column); }, "ref": dt.column, "type": "text"})); });
+        cells.push(React.createElement("td", null, this.props.predicted));
+        return cells;
+    };
+    PredictComponent.prototype.getValidColumns = function () {
+        var validColumns = [];
+        this.props.datatypes.map(function (dt) {
+            if (dt.datatype != "Ignore" && dt.datatype != "Label") {
+                validColumns.push(dt);
+            }
+        });
+        return validColumns;
+    };
+    PredictComponent.prototype.commitPredict = function () {
+        Actions.Experiment.CommitPredict();
+    };
+    PredictComponent.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", null, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, this.getColumnHeaders())), React.createElement("tbody", null, this.getExample())), React.createElement("input", {"type": "button", "onClick": function () { return _this.commitPredict(); }, "value": "Predict..."})));
+    };
+    return PredictComponent;
+})(React.Component);
+exports.PredictComponent = PredictComponent;

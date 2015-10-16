@@ -6,6 +6,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var React = require("react");
 var ExperimentStore = require("../stores/ExperimentStore");
 var ExperimentComponent = require("./Experiment");
+var Actions = require("../actions/actions");
 var ExperimentController = (function (_super) {
     __extends(ExperimentController, _super);
     function ExperimentController(props, context) {
@@ -26,24 +27,43 @@ var ExperimentController = (function (_super) {
             message: experimentData.message,
             readyForTraining: experimentData.readyForTraining,
             readyForMapping: experimentData.readyForMapping,
+            readyForNetwork: experimentData.readyForNetwork,
             mapperProps: {
                 availableTypes: experimentData.availableTypes,
                 examples: experimentData.examples,
                 datatypes: experimentData.datatypes,
                 acceptEdit: experimentData.readyForMapping
+            },
+            networkProps: {
+                hiddenLayers: experimentData.hiddenLayers,
+                acceptEdit: experimentData.readyForNetwork
+            },
+            predictProps: {
+                datatypes: experimentData.datatypes,
+                example: experimentData.example,
+                predicted: experimentData.predicted,
+                acceptEdit: true
             }
         };
     };
     ExperimentController.prototype.onChange = function () {
         this.setState(this.buildState());
     };
+    ExperimentController.prototype.doTrain = function () {
+        Actions.Experiment.CommitTraining();
+    };
     ExperimentController.prototype.render = function () {
+        var _this = this;
         var alertElement = this.state.message != null ? React.createElement("div", {"className": "alert"}, this.state.message) : null;
         var uploadElement = this.state.mapperProps.datatypes == null ? React.createElement(ExperimentComponent.FileUploadComponent, null) : null;
         var mapperElement = this.state.mapperProps.datatypes != null ?
-            React.createElement(ExperimentComponent.Experiment, {"acceptEdit": this.state.readyForMapping, "datatypeProps": this.state.mapperProps}) : null;
-        var trainElement = this.state.readyForTraining ? React.createElement("input", {"type": "button", "value": "Train..."}) : null;
-        return (React.createElement("div", {"className": "col-xs-10"}, alertElement, uploadElement, mapperElement, trainElement));
+            React.createElement(ExperimentComponent.DatatypeMapperTable, React.__spread({}, this.state.mapperProps)) : null;
+        var networkElement = this.state.networkProps.hiddenLayers != null ?
+            React.createElement(ExperimentComponent.NetworkComponent, React.__spread({}, this.state.networkProps)) : null;
+        var trainElement = this.state.readyForTraining ? React.createElement("input", {"type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        var predictElement = this.state.predictProps.example != null ?
+            React.createElement(ExperimentComponent.PredictComponent, React.__spread({}, this.state.predictProps)) : null;
+        return (React.createElement("div", {"className": "col-xs-10"}, alertElement, uploadElement, mapperElement, networkElement, trainElement, predictElement));
     };
     return ExperimentController;
 })(React.Component);

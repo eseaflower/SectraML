@@ -67,6 +67,14 @@ var _Experiment = (function () {
         this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
         this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
         this.DATATYPES_CHANGED = "DATATYPES_CHANGED";
+        this.LAYERS_CHANGED = "LAYERS_CHANGED";
+        this.COMMIT_TRAINING = "COMMIT_TRAINING";
+        this.TRAINING_COMPLETE = "TRAINING_COMPLETE";
+        this.TRAINING_FAILED = "TRAINING_FAILED";
+        this.EXAMPLE_CHANGED = "EXAMPLE_CHANGED";
+        this.COMMIT_PREDICT = "COMMIT_PREDICT";
+        this.PREDICT_COMPLETE = "PREDICT_COMPLETE";
+        this.PREDICT_FAILED = "PREDICT_FAILED";
     }
     _Experiment.prototype.CommitDatatypes = function () {
         AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: null });
@@ -88,6 +96,48 @@ var _Experiment = (function () {
     };
     _Experiment.prototype.DatatypeChanged = function (data) {
         AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_CHANGED, data: data });
+    };
+    _Experiment.prototype.LayersChanged = function (data) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.LAYERS_CHANGED, data: data });
+    };
+    _Experiment.prototype.CommitTraining = function () {
+        AppDispatcher.Dispatcher.dispatch({ type: this.COMMIT_TRAINING, data: null });
+    };
+    _Experiment.prototype.TrainingComplete = function (result) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.TRAINING_COMPLETE, data: result });
+    };
+    _Experiment.prototype.TrainingFailed = function (message) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.TRAINING_FAILED, data: message });
+    };
+    _Experiment.prototype.DoTraining = function (url, params) {
+        var _this = this;
+        Ajax.postJson(url, { type: "train", data: params }).
+            done(function (_) { return _this.TrainingComplete(_); }).
+            fail(function (xhr, status, err) {
+            var message = ["Training failed:", xhr.status.toString(), xhr.statusText].join(' ');
+            _this.TrainingFailed(message);
+        });
+    };
+    _Experiment.prototype.PredictComplete = function (result) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.PREDICT_COMPLETE, data: result });
+    };
+    _Experiment.prototype.PredictFailed = function (message) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.PREDICT_FAILED, data: message });
+    };
+    _Experiment.prototype.DoPredict = function (url, data) {
+        var _this = this;
+        Ajax.postJson(url, { type: "predict", data: data }).
+            done(function (_) { return _this.PredictComplete(_); }).
+            fail(function (xhr, status, err) {
+            var message = ["Prediction failed:", xhr.status.toString(), xhr.statusText].join(' ');
+            _this.PredictFailed(message);
+        });
+    };
+    _Experiment.prototype.ExampleChanged = function (val) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.EXAMPLE_CHANGED, data: val });
+    };
+    _Experiment.prototype.CommitPredict = function () {
+        AppDispatcher.Dispatcher.dispatch({ type: this.COMMIT_PREDICT, data: null });
     };
     return _Experiment;
 })();

@@ -88,16 +88,40 @@ export interface IDataType {
 	custom:{[key:string]:string};
 }
 
+export interface ITrainingParams {
+	hiddenLayers:number[];
+}
+
+export interface ITrainingResult {
+	
+}
+
 class _Experiment {	
 	public DATATYPES_COMMITED:string;
 	public UPLOAD_DATATYPES_COMPLETE:string;
 	public UPLOAD_DATATYPES_FAILED:string;
 	public DATATYPES_CHANGED:string;
+	public LAYERS_CHANGED:string;	
+	public COMMIT_TRAINING:string;
+	public TRAINING_COMPLETE:string;
+	public TRAINING_FAILED:string;
+	public EXAMPLE_CHANGED:string;
+	public COMMIT_PREDICT:string;
+	public PREDICT_COMPLETE:string;
+	public PREDICT_FAILED:string;
 	constructor() {
 		this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
 		this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
 		this.UPLOAD_DATATYPES_FAILED = "UPLOAD_DATATYPES_FAILED";
 		this.DATATYPES_CHANGED = "DATATYPES_CHANGED";
+		this.LAYERS_CHANGED = "LAYERS_CHANGED";
+		this.COMMIT_TRAINING ="COMMIT_TRAINING";
+		this.TRAINING_COMPLETE = "TRAINING_COMPLETE";
+		this.TRAINING_FAILED = "TRAINING_FAILED";
+		this.EXAMPLE_CHANGED = "EXAMPLE_CHANGED";
+		this.COMMIT_PREDICT = "COMMIT_PREDICT";
+		this.PREDICT_COMPLETE = "PREDICT_COMPLETE";
+		this.PREDICT_FAILED = "PREDICT_FAILED";
 	}	
 	public CommitDatatypes() {
 		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_COMMITED, data:null});
@@ -120,6 +144,53 @@ class _Experiment {
 	public DatatypeChanged(data:IDataType) {
 		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_CHANGED, data:data});
 	}
+	
+	public LayersChanged(data:number[]) {
+		AppDispatcher.Dispatcher.dispatch({type:this.LAYERS_CHANGED, data:data});
+	}
+	public CommitTraining() {
+		AppDispatcher.Dispatcher.dispatch({type:this.COMMIT_TRAINING, data:null});
+	}
+	private TrainingComplete(result:ITrainingResult) {
+		AppDispatcher.Dispatcher.dispatch({type:this.TRAINING_COMPLETE, data:result});
+	}
+	private TrainingFailed(message:string) {
+		AppDispatcher.Dispatcher.dispatch({type:this.TRAINING_FAILED, data:message});
+	}
+	
+	public DoTraining(url:string, params:ITrainingParams) {
+		Ajax.postJson<ITrainingResult>(url, {type:"train", data:params}).
+		done((_)=> this.TrainingComplete(_)).
+		fail((xhr:JQueryXHR, status:string, err:Error) => {
+			var message = ["Training failed:",xhr.status.toString(),xhr.statusText].join(' ');				
+			this.TrainingFailed(message);	
+		});		
+	}
+	
+	private PredictComplete(result:string) {
+		AppDispatcher.Dispatcher.dispatch({type:this.PREDICT_COMPLETE, data:result});		
+	}
+	private PredictFailed(message:string) {
+		AppDispatcher.Dispatcher.dispatch({type:this.PREDICT_FAILED, data:message});
+	}
+	
+	public DoPredict(url:string, data:[{[key:string]:string}]) {
+		Ajax.postJson<string>(url, {type:"predict", data:data}).
+		done((_)=> this.PredictComplete(_)).
+		fail((xhr:JQueryXHR, status:string, err:Error) => {
+			var message = ["Prediction failed:",xhr.status.toString(),xhr.statusText].join(' ');				
+			this.PredictFailed(message);	
+		});		
+	}
+	
+	public ExampleChanged(val:{column:string, value:string}) {
+		AppDispatcher.Dispatcher.dispatch({type:this.EXAMPLE_CHANGED, data:val});
+	}
+	
+	public CommitPredict() {
+		AppDispatcher.Dispatcher.dispatch({type:this.COMMIT_PREDICT, data:null});
+	}
+	
 }
 
 export var Experiment = new _Experiment()
