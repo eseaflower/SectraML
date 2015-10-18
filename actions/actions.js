@@ -152,3 +152,22 @@ var _User = (function () {
     return _User;
 })();
 exports.User = new _User();
+var _Navigation = (function () {
+    function _Navigation() {
+        this.NAVIGATE_CREATE = "NAVIGATE_CREATE";
+        this.NAVIGATE_PREDICT = "NAVIGATE_PREDICT";
+    }
+    _Navigation.prototype.CheckType = function (type) {
+        if (type == this.NAVIGATE_CREATE || type == this.NAVIGATE_PREDICT) {
+            return true;
+        }
+        return false;
+    };
+    _Navigation.prototype.Navigate = function (type) {
+        if (this.CheckType(type)) {
+            AppDispatcher.Dispatcher.dispatch({ type: type, data: null });
+        }
+    };
+    return _Navigation;
+})();
+exports.Navigation = new _Navigation();

@@ -153,6 +153,25 @@ var _User = (function () {
     return _User;
 })();
 exports.User = new _User();
+var _Navigation = (function () {
+    function _Navigation() {
+        this.NAVIGATE_CREATE = "NAVIGATE_CREATE";
+        this.NAVIGATE_PREDICT = "NAVIGATE_PREDICT";
+    }
+    _Navigation.prototype.CheckType = function (type) {
+        if (type == this.NAVIGATE_CREATE || type == this.NAVIGATE_PREDICT) {
+            return true;
+        }
+        return false;
+    };
+    _Navigation.prototype.Navigate = function (type) {
+        if (this.CheckType(type)) {
+            AppDispatcher.Dispatcher.dispatch({ type: type, data: null });
+        }
+    };
+    return _Navigation;
+})();
+exports.Navigation = new _Navigation();
 
 },{"../dispatcher/AppDispatcher":6,"../services/AjaxJson":167}],2:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
@@ -174,7 +193,7 @@ var FileUploadComponent = (function (_super) {
     };
     FileUploadComponent.prototype.render = function () {
         var _this = this;
-        return (React.createElement("div", null, React.createElement("label", null, "Data file"), React.createElement("input", {"className": "wide", "ref": "filename", "type": "file"}), React.createElement("input", {"value": "Upload...", "type": "button", "onClick": function () { return _this.handleUpload(); }})));
+        return (React.createElement("div", null, React.createElement("input", {"onChange": function () { return _this.handleUpload(); }, "ref": "filename", "type": "file"})));
     };
     return FileUploadComponent;
 })(React.Component);
@@ -208,13 +227,15 @@ var DatatypeComponent = (function (_super) {
         return this.props.availableTypes.map(function (type) { return React.createElement("option", {"value": type}, type); });
     };
     DatatypeComponent.prototype.valueChanged = function () {
-        var component = this.refs["selectedValue"];
-        var datatype = component.getDOMNode().value;
-        Actions.Experiment.DatatypeChanged({ column: this.props.type.column, datatype: datatype, custom: this.getCustomValues() });
+        if (this.props.acceptEdit) {
+            var component = this.refs["selectedValue"];
+            var datatype = component.getDOMNode().value;
+            Actions.Experiment.DatatypeChanged({ column: this.props.type.column, datatype: datatype, custom: this.getCustomValues() });
+        }
     };
     DatatypeComponent.prototype.getDatatypeSelect = function () {
         var _this = this;
-        return (React.createElement("select", {"onChange": function () { return _this.valueChanged(); }, "ref": "selectedValue", "value": this.props.type.datatype}, this.getOptions()));
+        return (React.createElement("select", {"className": "form-control", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "selectedValue", "value": this.props.type.datatype}, this.getOptions()));
     };
     DatatypeComponent.prototype.getElementValue = function (id) {
         var comp = this.refs[id];
@@ -254,7 +275,7 @@ var DatatypeComponent = (function (_super) {
         if (sizeValue === undefined) {
             sizeValue = "";
         }
-        return (React.createElement("div", null, React.createElement("label", null, "Min count:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "minCount", "type": "text", "value": minCountValue}), React.createElement("label", null, "Size:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "size", "type": "text", "value": sizeValue})));
+        return (React.createElement("div", null, React.createElement("label", {"className": "control-label col-xs-2"}, "Count:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "minCount", "type": "text", "value": minCountValue})), React.createElement("label", {"className": "control-label col-xs-2"}, "Size:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "size", "type": "text", "value": sizeValue}))));
     };
     DatatypeComponent.prototype.getNumberElements = function () {
         var _this = this;
@@ -262,7 +283,7 @@ var DatatypeComponent = (function (_super) {
         if (dimValue === undefined) {
             dimValue = "";
         }
-        return (React.createElement("div", null, React.createElement("label", null, "Dim:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "dim", "type": "text", "value": dimValue}), " "));
+        return (React.createElement("div", null, React.createElement("label", {"className": "control-label col-xs-2"}, "Dim:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "dim", "type": "text", "value": dimValue}))));
     };
     DatatypeComponent.prototype.getLabelElements = function () {
         var _this = this;
@@ -270,7 +291,7 @@ var DatatypeComponent = (function (_super) {
         if (filterValue === undefined) {
             filterValue = "";
         }
-        return (React.createElement("div", null, React.createElement("label", null, "Filter:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "filter", "type": "text", "value": filterValue})));
+        return (React.createElement("div", null, React.createElement("label", {"className": "control-label col-xs-2"}, "Filter:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "filter", "type": "text", "value": filterValue}))));
     };
     DatatypeComponent.prototype.getTypeSpecificElements = function () {
         switch (this.props.type.datatype) {
@@ -292,7 +313,7 @@ var DatatypeComponent = (function (_super) {
         return null;
     };
     DatatypeComponent.prototype.render = function () {
-        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-2"}, React.createElement("strong", null, this.props.type.column)), React.createElement("div", {"className": "col-xs-2"}, this.getDatatypeSelect()), React.createElement("div", {"className": "col-xs-8"}, this.getTypeSpecificElements())));
+        return (React.createElement("div", {"className": "row form-group"}, React.createElement("div", {"className": "col-xs-2"}, React.createElement("strong", null, this.props.type.column)), React.createElement("div", {"className": "col-xs-3"}, this.getDatatypeSelect()), React.createElement("div", {"className": "col-xs-7"}, React.createElement("div", {"className": "row"}, this.getTypeSpecificElements()))));
     };
     return DatatypeComponent;
 })(React.Component);
@@ -307,13 +328,21 @@ var DatatypeMapperTable = (function (_super) {
         }
     };
     DatatypeMapperTable.prototype.getDatatypes = function () {
-        var _this = this;
-        return this.props.datatypes.map(function (dt) { return React.createElement(DatatypeComponent, {"type": dt, "availableTypes": _this.props.availableTypes}); });
+        var result = [];
+        for (var i = 0; i < this.props.datatypes.length; i++) {
+            var dt = this.props.datatypes[i];
+            if (this.props.acceptEdit || dt.datatype != "Ignore") {
+                result.push(React.createElement(DatatypeComponent, {"type": dt, "availableTypes": this.props.availableTypes, "acceptEdit": this.props.acceptEdit}));
+            }
+        }
+        return result;
     };
     DatatypeMapperTable.prototype.render = function () {
         var _this = this;
         var headers = this.props.datatypes.map(function (dt) { return dt.column; });
-        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), React.createElement("h4", null, "Datatype mapping"), this.getDatatypes(), React.createElement("input", {"type": "button", "disabled": !this.props.acceptEdit, "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
+        var createButton = this.props.acceptEdit ?
+            React.createElement("input", {"className": "btn btn-primary", "type": "button", "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }}) : null;
+        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), React.createElement("h4", null, "Datatype mapping"), this.getDatatypes(), createButton));
     };
     return DatatypeMapperTable;
 })(React.Component);
@@ -335,21 +364,23 @@ var NetworkComponent = (function (_super) {
         _super.apply(this, arguments);
     }
     NetworkComponent.prototype.handleChange = function (index) {
-        var refId = "l_" + index.toString();
-        var c = this.refs[refId];
-        var value = c.getDOMNode().value;
-        var numValue = Number(value);
-        if (!isNaN(numValue)) {
-            var copy = this.props.hiddenLayers.slice();
-            copy[index] = numValue;
-            Actions.Experiment.LayersChanged(copy);
+        if (this.props.acceptEdit) {
+            var refId = "l_" + index.toString();
+            var c = this.refs[refId];
+            var value = c.getDOMNode().value;
+            var numValue = Number(value);
+            if (!isNaN(numValue)) {
+                var copy = this.props.hiddenLayers.slice();
+                copy[index] = numValue;
+                Actions.Experiment.LayersChanged(copy);
+            }
         }
     };
     NetworkComponent.prototype.getLayerElement = function (index) {
         var _this = this;
         var refId = "l_" + index.toString();
         var value = this.props.hiddenLayers[index].toString();
-        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("input", {"ref": refId, "onChange": function () { return _this.handleChange(index); }, "type": "text", "value": value}))));
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"className": "form-control", "disabled": !this.props.acceptEdit, "ref": refId, "onChange": function () { return _this.handleChange(index); }, "type": "text", "value": value}))));
     };
     NetworkComponent.prototype.getLayerElements = function () {
         var _this = this;
@@ -359,8 +390,10 @@ var NetworkComponent = (function (_super) {
                 elements.push(this.getLayerElement(i));
             }
         }
-        var addElement = (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-offset-1 col-xs-1"}, React.createElement("input", {"onClick": function () { return _this.addLayer(); }, "type": "button", "value": "Add..."}))));
-        elements.push(addElement);
+        if (this.props.acceptEdit) {
+            var addElement = (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-offset-1 col-xs-1"}, React.createElement("input", {"className": "btn btn-success", "onClick": function () { return _this.addLayer(); }, "type": "button", "value": "Add..."}))));
+            elements.push(addElement);
+        }
         return elements;
     };
     NetworkComponent.prototype.addLayer = function () {
@@ -368,8 +401,14 @@ var NetworkComponent = (function (_super) {
         copy.push(0);
         Actions.Experiment.LayersChanged(copy);
     };
+    NetworkComponent.prototype.getInputLayer = function () {
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Input:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, this.props.inputDimension))));
+    };
+    NetworkComponent.prototype.getOutputLayer = function () {
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Output:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, this.props.outputDimension))));
+    };
     NetworkComponent.prototype.render = function () {
-        return (React.createElement("div", null, React.createElement("h4", null, "Hidden layers"), this.getLayerElements()));
+        return (React.createElement("div", null, React.createElement("h4", null, "Network"), this.getInputLayer(), this.getLayerElements(), this.getOutputLayer()));
     };
     return NetworkComponent;
 })(React.Component);
@@ -423,6 +462,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 var ExperimentStore = require("../stores/ExperimentStore");
+var NavigationStore = require("../stores/NavigationStore");
 var ExperimentComponent = require("./Experiment");
 var Actions = require("../actions/actions");
 var ExperimentController = (function (_super) {
@@ -435,13 +475,16 @@ var ExperimentController = (function (_super) {
     }
     ExperimentController.prototype.componentDidMount = function () {
         ExperimentStore.Instance.addChangeListener(this.changeEventHandler);
+        NavigationStore.Instance.addChangeListener(this.changeEventHandler);
     };
     ExperimentController.prototype.componentWillUnmount = function () {
         ExperimentStore.Instance.removeChangeListener(this.changeEventHandler);
+        NavigationStore.Instance.removeChangeListener(this.changeEventHandler);
     };
     ExperimentController.prototype.buildState = function () {
         var experimentData = ExperimentStore.Instance.getState();
         return {
+            mode: NavigationStore.Instance.getActiveType(),
             message: experimentData.message,
             readyForTraining: experimentData.readyForTraining,
             readyForMapping: experimentData.readyForMapping,
@@ -454,7 +497,9 @@ var ExperimentController = (function (_super) {
             },
             networkProps: {
                 hiddenLayers: experimentData.hiddenLayers,
-                acceptEdit: experimentData.readyForNetwork
+                acceptEdit: experimentData.readyForNetwork,
+                inputDimension: experimentData.inputDimension,
+                outputDimension: experimentData.outputDimension
             },
             predictProps: {
                 datatypes: experimentData.datatypes,
@@ -470,24 +515,38 @@ var ExperimentController = (function (_super) {
     ExperimentController.prototype.doTrain = function () {
         Actions.Experiment.CommitTraining();
     };
-    ExperimentController.prototype.render = function () {
+    ExperimentController.prototype.getCreateElement = function () {
         var _this = this;
-        var alertElement = this.state.message != null ? React.createElement("div", {"className": "alert"}, this.state.message) : null;
+        if (this.state.mode != "Create") {
+            return null;
+        }
         var uploadElement = this.state.mapperProps.datatypes == null ? React.createElement(ExperimentComponent.FileUploadComponent, null) : null;
         var mapperElement = this.state.mapperProps.datatypes != null ?
             React.createElement(ExperimentComponent.DatatypeMapperTable, React.__spread({}, this.state.mapperProps)) : null;
         var networkElement = this.state.networkProps.hiddenLayers != null ?
             React.createElement(ExperimentComponent.NetworkComponent, React.__spread({}, this.state.networkProps)) : null;
-        var trainElement = this.state.readyForTraining ? React.createElement("input", {"type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        var trainElement = this.state.readyForTraining ? React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, this.getAlertElement()));
+    };
+    ExperimentController.prototype.getPredictElement = function () {
+        if (this.state.mode != "Predict") {
+            return null;
+        }
         var predictElement = this.state.predictProps.example != null ?
             React.createElement(ExperimentComponent.PredictComponent, React.__spread({}, this.state.predictProps)) : null;
-        return (React.createElement("div", {"className": "col-xs-10"}, alertElement, uploadElement, mapperElement, networkElement, trainElement, predictElement));
+        return (React.createElement("div", null, predictElement));
+    };
+    ExperimentController.prototype.getAlertElement = function () {
+        return this.state.message != null ? React.createElement("div", {"className": "alert alert-info"}, this.state.message) : null;
+    };
+    ExperimentController.prototype.render = function () {
+        return (React.createElement("div", {"className": "col-xs-10"}, this.getCreateElement(), this.getPredictElement()));
     };
     return ExperimentController;
 })(React.Component);
 exports.ExperimentController = ExperimentController;
 
-},{"../actions/actions":1,"../stores/ExperimentStore":169,"./Experiment":2,"react":166}],4:[function(require,module,exports){
+},{"../actions/actions":1,"../stores/ExperimentStore":169,"../stores/NavigationStore":171,"./Experiment":2,"react":166}],4:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -549,38 +608,64 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var React = require("react");
-;
+var Actions = require("../actions/actions");
+var NavigationStore = require("../stores/NavigationStore");
 ;
 var NavigationItem = (function (_super) {
     __extends(NavigationItem, _super);
     function NavigationItem() {
         _super.apply(this, arguments);
     }
-    NavigationItem.prototype.handleClick = function (event) {
-        this.props.clickCallback(this.props);
+    NavigationItem.prototype.handleClick = function () {
+        Actions.Navigation.Navigate(this.props.actionType);
     };
     NavigationItem.prototype.render = function () {
         var _this = this;
-        return (React.createElement("li", {"className": this.props.active ? "active" : ""}, React.createElement("a", {"onClick": function (event) { return _this.handleClick(event); }, "href": this.props.url}, this.props.name)));
+        var css = "";
+        if (this.props.active) {
+            css = "active";
+        }
+        else if (!this.props.enabled) {
+            css = "disabled";
+        }
+        return (React.createElement("li", {"className": css}, React.createElement("a", {"onClick": function () { return _this.handleClick(); }, "href": "#"}, this.props.name)));
     };
     return NavigationItem;
 })(React.Component);
 ;
 var Sidebar = (function (_super) {
     __extends(Sidebar, _super);
-    function Sidebar() {
-        _super.apply(this, arguments);
+    function Sidebar(props, context) {
+        var _this = this;
+        _super.call(this, props, context);
+        this.changeEventHandler = function () { return _this.onChange(); };
+        this.state = this.buildState();
     }
+    Sidebar.prototype.buildState = function () {
+        var storeState = NavigationStore.Instance.getState();
+        return {
+            items: storeState.navigationItems
+        };
+    };
+    Sidebar.prototype.componentDidMount = function () {
+        NavigationStore.Instance.addChangeListener(this.changeEventHandler);
+    };
+    Sidebar.prototype.componentWillUnmount = function () {
+        NavigationStore.Instance.removeChangeListener(this.changeEventHandler);
+    };
+    Sidebar.prototype.onChange = function () {
+        this.setState(this.buildState());
+    };
     Sidebar.prototype.render = function () {
-        var navigationElements = this.props.items.map(function (item) { return React.createElement(NavigationItem, React.__spread({}, item)); });
-        return (React.createElement("div", {"className": "col-xs-2 sidebar", "id": "navigation"}, "Navigation stuff", React.createElement("ul", {"className": "nav nav-sidebar"}, navigationElements)));
+        var navigationElements = this.state.items.map(function (item) { return React.createElement(NavigationItem, React.__spread({}, item)); });
+        return (React.createElement("div", {"className": "col-xs-2 sidebar", "id": "navigation"}, "Mode", React.createElement("ul", {"className": "nav nav-sidebar"}, navigationElements)));
     };
     return Sidebar;
 })(React.Component);
 exports.Sidebar = Sidebar;
 ;
 
-},{"react":166}],6:[function(require,module,exports){
+},{"../actions/actions":1,"../stores/NavigationStore":171,"react":166}],6:[function(require,module,exports){
 var flux = require('flux');
 exports.Dispatcher = new flux.Dispatcher();
 var TableDispatcher = (function () {
@@ -21115,6 +21200,8 @@ var ExperimentStore = (function (_super) {
             examples: null,
             message: null,
             datatypes: null,
+            inputDimension: null,
+            outputDimension: null,
             availableTypes: null,
             hiddenLayers: null,
             example: null,
@@ -21136,6 +21223,7 @@ var ExperimentStore = (function (_super) {
         this.dispatcher.register(Actions.Experiment.LAYERS_CHANGED, function (_) { return _this.layersChanged(_); });
         this.dispatcher.register(Actions.Experiment.COMMIT_TRAINING, function () { return _this.trainingCommited(); });
         this.dispatcher.register(Actions.Experiment.TRAINING_COMPLETE, function () { return _this.trainingComplete(); });
+        this.dispatcher.register(Actions.Experiment.TRAINING_FAILED, function (_) { return _this.trainingFailed(_); });
         this.dispatcher.register(Actions.Experiment.EXAMPLE_CHANGED, function (_) { return _this.exampleChanged(_); });
         this.dispatcher.register(Actions.Experiment.COMMIT_PREDICT, function () { return _this.predictCommited(); });
         this.dispatcher.register(Actions.Experiment.PREDICT_COMPLETE, function (_) { return _this.predictCompleted(_); });
@@ -21172,12 +21260,16 @@ var ExperimentStore = (function (_super) {
         if (this.experimentUrl != null) {
             this.state.readyForMapping = false;
             Actions.Experiment.UploadDatatypes(this.experimentUrl, this.state.datatypes);
+            this.state.message = "Creating data mapping...";
             this.emitChange();
         }
     };
     ExperimentStore.prototype.uploadDataTypesCompleted = function (data) {
-        this.state.datatypes = data;
-        this.state.readyForMapping = true;
+        this.state.message = null;
+        this.state.datatypes = data.mapping;
+        this.state.inputDimension = data.inputDimension;
+        this.state.outputDimension = data.outputDimension;
+        this.state.readyForMapping = false;
         this.state.readyForNetwork = true;
         this.state.readyForTraining = true;
         if (this.state.hiddenLayers == null) {
@@ -21226,6 +21318,7 @@ var ExperimentStore = (function (_super) {
             this.state.readyForNetwork = false;
             this.state.readyForTraining = false;
             this.state.example = null;
+            this.state.message = "Training model...";
             var layers = this.state.hiddenLayers != null ? this.state.hiddenLayers : [];
             Actions.Experiment.DoTraining(this.experimentUrl, { hiddenLayers: layers });
             this.emitChange();
@@ -21233,6 +21326,11 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.trainingComplete = function () {
         this.state.example = {};
+        this.state.message = "Prediction model available at " + this.experimentUrl + "?args={\"type\":\"predict\",\"data\":[<list of your data>]}";
+        this.emitChange();
+    };
+    ExperimentStore.prototype.trainingFailed = function (message) {
+        this.state.message = message;
         this.emitChange();
     };
     ExperimentStore.prototype.exampleChanged = function (val) {
@@ -21266,7 +21364,7 @@ var ExperimentStore = (function (_super) {
 exports.ExperimentStore = ExperimentStore;
 exports.Instance = new ExperimentStore();
 
-},{"../actions/actions":1,"./BaseStore":168,"./UserStore":171}],170:[function(require,module,exports){
+},{"../actions/actions":1,"./BaseStore":168,"./UserStore":172}],170:[function(require,module,exports){
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -21318,6 +21416,88 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var Base = require('./BaseStore');
 var Actions = require('../actions/actions');
+var ExperimentStore = require("./ExperimentStore");
+var NavigationStore = (function (_super) {
+    __extends(NavigationStore, _super);
+    function NavigationStore() {
+        var _this = this;
+        _super.call(this);
+        this.state = {
+            navigationItems: [
+                { name: "Create", active: true, enabled: true, actionType: Actions.Navigation.NAVIGATE_CREATE },
+                { name: "Predict", active: false, enabled: false, actionType: Actions.Navigation.NAVIGATE_PREDICT }
+            ]
+        };
+        this.dispatcher.register(Actions.Navigation.NAVIGATE_CREATE, function () { return _this.navigateCreate(); });
+        this.dispatcher.register(Actions.Navigation.NAVIGATE_PREDICT, function () { return _this.navigatePredict(); });
+        this.dispatcher.register(Actions.Experiment.TRAINING_COMPLETE, function () { return _this.trainingComplete(); });
+    }
+    NavigationStore.prototype.getState = function () {
+        return $.extend({}, this.state);
+    };
+    NavigationStore.prototype.getActiveType = function () {
+        for (var i = 0; i < this.state.navigationItems.length; i++) {
+            if (this.state.navigationItems[i].active) {
+                return this.state.navigationItems[i].name;
+            }
+        }
+        return null;
+    };
+    NavigationStore.prototype.canNavigateTo = function (type) {
+        for (var i = 0; i < this.state.navigationItems.length; i++) {
+            if (this.state.navigationItems[i].name == type) {
+                return this.state.navigationItems[i].enabled;
+            }
+        }
+        return false;
+    };
+    NavigationStore.prototype.navigateTo = function (type) {
+        if (this.canNavigateTo(type)) {
+            for (var i = 0; i < this.state.navigationItems.length; i++) {
+                if (this.state.navigationItems[i].name == type) {
+                    this.state.navigationItems[i].active = true;
+                }
+                else {
+                    this.state.navigationItems[i].active = false;
+                }
+            }
+            this.emitChange();
+        }
+    };
+    NavigationStore.prototype.enableType = function (type, enabled) {
+        for (var i = 0; i < this.state.navigationItems.length; i++) {
+            if (this.state.navigationItems[i].name == type) {
+                this.state.navigationItems[i].enabled = enabled;
+            }
+        }
+        this.emitChange();
+    };
+    NavigationStore.prototype.navigateCreate = function () {
+        this.navigateTo("Create");
+    };
+    NavigationStore.prototype.navigatePredict = function () {
+        this.navigateTo("Predict");
+    };
+    NavigationStore.prototype.trainingComplete = function () {
+        this.waitFor(ExperimentStore.Instance);
+        var experimentState = ExperimentStore.Instance.getState();
+        if (experimentState.example != null) {
+            this.enableType("Predict", true);
+        }
+    };
+    return NavigationStore;
+})(Base.BaseStore);
+exports.NavigationStore = NavigationStore;
+exports.Instance = new NavigationStore();
+
+},{"../actions/actions":1,"./BaseStore":168,"./ExperimentStore":169}],172:[function(require,module,exports){
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
+var Base = require('./BaseStore');
+var Actions = require('../actions/actions');
 var UserStore = (function (_super) {
     __extends(UserStore, _super);
     function UserStore() {
@@ -21338,11 +21518,6 @@ var UserStore = (function (_super) {
 exports.Instance = new UserStore();
 
 },{"../actions/actions":1,"./BaseStore":168}],"main":[function(require,module,exports){
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 var React = require("react");
 var Login = require("./Login");
 var Sidebar = require("./Sidebar");
@@ -21351,35 +21526,8 @@ var Actions = require("../actions/actions");
 function buildLogin() {
     return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-3 col-xs-offset-4"}, React.createElement("div", {"className": "page-header"}, React.createElement("h1", null, "Sectra ML")), React.createElement(Login.LoginComponent, null)))));
 }
-var UserMainComponent = (function (_super) {
-    __extends(UserMainComponent, _super);
-    function UserMainComponent(props, context) {
-        var _this = this;
-        _super.call(this, props, context);
-        this.state = {
-            navigationItems: [
-                { id: 0, name: "Overview", url: "#", active: true, clickCallback: function (p) { return _this.handleNavigationClick(p); } },
-                { id: 1, name: "Second", url: "#", active: false, clickCallback: function (p) { return _this.handleNavigationClick(p); } },
-                { id: 2, name: "Analytics", url: "#", active: false, clickCallback: function (p) { return _this.handleNavigationClick(p); } },
-                { id: 3, name: "Export", url: "#", active: false, clickCallback: function (p) { return _this.handleNavigationClick(p); } },
-            ],
-            activeItem: 0
-        };
-    }
-    UserMainComponent.prototype.handleNavigationClick = function (item) {
-        var newState = $.extend({}, this.state);
-        newState.navigationItems[newState.activeItem].active = false;
-        newState.navigationItems[item.id].active = true;
-        newState.activeItem = item.id;
-        this.setState(newState);
-    };
-    UserMainComponent.prototype.render = function () {
-        return (React.createElement("div", null, React.createElement(Sidebar.Sidebar, {"items": this.state.navigationItems}), React.createElement(Experiment.ExperimentController, null)));
-    };
-    return UserMainComponent;
-})(React.Component);
 function buildUser(userId) {
-    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("h1", {"className": "page-header"}, "User Workspace")), React.createElement("div", {"className": "row"}, React.createElement(UserMainComponent, null))));
+    return (React.createElement("div", {"className": "container"}, React.createElement("div", {"className": "row"}, React.createElement("h1", {"className": "page-header"}, "User Workspace")), React.createElement("div", {"className": "row"}, React.createElement(Sidebar.Sidebar, null), React.createElement(Experiment.ExperimentController, null))));
 }
 function mountAndRender(contentId, element) {
     var mount = document.getElementById(contentId);

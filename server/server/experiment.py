@@ -19,23 +19,43 @@ class ExperimentFactory(object):
         self.id = experimentId
     
     def createDataMapping(self, data):
-        return saveDatamapping(self.id, data)
+        dataMapping  = saveDatamapping(self.id, data)
+
+        rawFilename = getRawFilename(self.id)
+        allData, headers  = toLookup(rawFilename)
+                        
+        #Split data into train/validation/test
+        trainData, validationData  = featuremapping.splitData(allData, split=0.99)        
+
+        #Save the datasets
+        experimentDir = getCreateExperimentDir(self.id)
+        trainDataFilename = "{0}/traindata.pkl".format(experimentDir)
+        save(trainDataFilename, trainData, validationData)
+
+        #Build the mapper based on the training data.
+        itemMapper = buildMapper(trainData, headers, dataMapping)
+        itemMapperFilename = "{0}/mapper.pkl".format(experimentDir)
+        save(itemMapperFilename, itemMapper)
+
+        result = {"mapping":dataMapping, 
+                  "inputDimension":itemMapper.dimension, 
+                  "outputDimension":itemMapper.range}
+
+        return result
 
     def createNetwork(self, data):
         return saveHiddenTopology(data)
 
     def train(self, trainArgs):
-        # Load stored experiment data.
-        dataMapping = loadDatamapping(self.id)
-        data, headers = getDataFile(self.id)
 
-        #Split data into train/validation/test
-        trainData, testData = featuremapping.splitData(data, split=0.99)
-        trainData, validationData = featuremapping.splitData(trainData, split=0.99)
+        # Get train data
+        experimentDir = getCreateExperimentDir(self.id)
+        trainDataFilename = "{0}/traindata.pkl".format(experimentDir)
+        trainData, validationData = load(trainDataFilename)
         
         #Build the mapper based on the training data.
-        itemMapper = buildMapper(trainData, headers, dataMapping)
-    
+        itemMapperFilename = "{0}/mapper.pkl".format(experimentDir)
+        itemMapper = load(itemMapperFilename)[0]
 
         print("Beginning mapping of {0} samples".format(len(trainData)))
         mappedTrainX, mappedTrainY = itemMapper.map(trainData)
@@ -117,13 +137,15 @@ class ExperimentFactory(object):
         experimentDir = getCreateExperimentDir(self.id)
         modelFilename = "{0}/model.pkl".format(experimentDir)
         # Save all relevant model data, include normalization if this is used.
-        save(modelFilename, x, y, classifier, itemMapper)
+        save(modelFilename, x, y, classifier)
 
 
     def predict(self, data):
         experimentDir = getCreateExperimentDir(self.id)
+        mapperFilename = "{0}/mapper.pkl".format(experimentDir)
+        itemMapper = load(mapperFilename)[0]
         modelFilename = "{0}/model.pkl".format(experimentDir)
-        x, y, classifier, itemMapper = load(modelFilename)
+        x, y, classifier = load(modelFilename)
             
         predict_func = theano.function(inputs=[x],
                                         outputs=classifier.y_pred)
@@ -147,7 +169,9 @@ def createExperiment(filename, userId):
     loader = CSVLoader.Loader()
     headers, rows = loader.LoadTrunc(filename, size=5)
     availableTypes = ["Ignore", "BagOfItems","BagOfShingles", "Number", "Label"]
-    return ExperimentDescriptor(555, headers, rows, availableTypes)    
+    experimentId = 555
+    
+    return ExperimentDescriptor(experimentId, headers, rows, availableTypes)    
 
 
 def toLookup(filename):
@@ -184,14 +208,21 @@ def getCreateExperimentDir(experimentId):
         os.makedirs(dir)
     return dir
 
+def createDataFile(experimentId):
+    dir = getCreateExperimentDir(experimentId)
+    dataFilename = "{0}/data.pkl".format(dir)
+    data = None
+    filename = getRawFilename(experimentId)
+    data = toLookup(filename)
+    save(dataFilename, data)
+    return data
+
 def getDataFile(experimentId):
     dir = getCreateExperimentDir(experimentId)
     dataFilename = "{0}/data.pkl".format(dir)
     data = None
     if not os.path.exists(dataFilename):
-        filename = getRawFilename(experimentId)
-        data = toLookup(filename)
-        save(dataFilename, data)
+        data = createDataFile(experimentId)
     else:
         data = load(dataFilename)[0]
     return data

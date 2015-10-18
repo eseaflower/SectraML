@@ -88,6 +88,12 @@ export interface IDataType {
 	custom:{[key:string]:string};
 }
 
+export interface IDataMappingResult {
+ 	mapping:IDataType[];	
+	inputDimension:number;
+	outputDimension:number;	 
+}
+
 export interface ITrainingParams {
 	hiddenLayers:number[];
 }
@@ -127,14 +133,14 @@ class _Experiment {
 		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_COMMITED, data:null});
 	}
 	
-	private UploadDataTypesComplete(data:IDataType[]){
+	private UploadDataTypesComplete(data:IDataMappingResult){
 		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_DATATYPES_COMPLETE, data:data});
 	}
 	private UploadDataTypesFailed(message:string) {				
 		AppDispatcher.Dispatcher.dispatch({type:this.UPLOAD_DATATYPES_FAILED, data:message});
 	}
 	public UploadDatatypes(url:string, data:IDataType[]) {
-		Ajax.postJson<IDataType[]>(url, {type:"createDataMapping", data:data}).
+		Ajax.postJson<IDataMappingResult>(url, {type:"createDataMapping", data:data}).
 		done((_) => this.UploadDataTypesComplete(_)).
 		fail((xhr:JQueryXHR, status:string, err:Error) => {
 			var message = ["Upload datatypes failed:",xhr.status.toString(),xhr.statusText].join(' ');				
@@ -206,3 +212,26 @@ class _User {
 	}
 }
 export var User = new _User();
+
+class _Navigation {
+	public NAVIGATE_CREATE:string;
+	public NAVIGATE_PREDICT:string;
+	constructor() {
+		this.NAVIGATE_CREATE = "NAVIGATE_CREATE";
+		this.NAVIGATE_PREDICT = "NAVIGATE_PREDICT";
+	}
+	private CheckType(type:string):boolean {
+		if (type == this.NAVIGATE_CREATE || type == this.NAVIGATE_PREDICT) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Navigate(type:string) {
+		if (this.CheckType(type)) {
+			AppDispatcher.Dispatcher.dispatch({type:type, data:null});
+		}		
+	}
+}
+
+export var Navigation = new _Navigation();

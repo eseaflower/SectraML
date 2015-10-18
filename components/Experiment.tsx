@@ -14,8 +14,7 @@ export class FileUploadComponent extends React.Component<{}, {}> {
 	
 	public render():JSX.Element {
 		return (<div>
-			<label>Data file</label><input className="wide" ref="filename" type="file"/>
-			<input value="Upload..." type="button" onClick={() => this.handleUpload()}/>		
+				<input onChange={() => this.handleUpload()} ref="filename" type="file"/>
 			</div>)		
 	}	
 }
@@ -55,6 +54,7 @@ class ExampleTableComponent extends React.Component<IExampleTableProps, {}>{
 export interface IDatatypeProps {
 	type:Actions.IDataType;
 	availableTypes:string[];
+	acceptEdit:boolean;
 }
 
 class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
@@ -62,14 +62,16 @@ class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
 		return this.props.availableTypes.map(type => <option value={type}>{type}</option>);
 	}
 	
-	private valueChanged() {							
-		var component = this.refs["selectedValue"] as React.ClassicComponent<any, any>;
-		var datatype = component.getDOMNode<HTMLSelectElement>().value;
-		Actions.Experiment.DatatypeChanged({column:this.props.type.column, datatype:datatype, custom:this.getCustomValues()});	
+	private valueChanged() {
+		if (this.props.acceptEdit) {							
+			var component = this.refs["selectedValue"] as React.ClassicComponent<any, any>;
+			var datatype = component.getDOMNode<HTMLSelectElement>().value;
+			Actions.Experiment.DatatypeChanged({column:this.props.type.column, datatype:datatype, custom:this.getCustomValues()});
+		}	
 	}
 
 	private getDatatypeSelect():JSX.Element {
-		return (<select onChange={()=>this.valueChanged()} ref="selectedValue" value={this.props.type.datatype}>
+		return (<select className="form-control" disabled={!this.props.acceptEdit} onChange={()=>this.valueChanged()} ref="selectedValue" value={this.props.type.datatype}>
 			{this.getOptions()}
 		</select>)				
 	}
@@ -115,8 +117,14 @@ class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
 			sizeValue = "";
 		}
 		return (<div>
-		<label>Min count:</label><input className="thin" onChange={() => this.valueChanged()} ref="minCount" type="text" value={minCountValue}/>
-		<label>Size:</label><input className="thin" onChange={() => this.valueChanged()} ref="size" type="text" value={sizeValue}/>
+		<label className="control-label col-xs-2">Count:</label>
+			<div className = "col-xs-3">
+				<input className="form-control input-sm" disabled={!this.props.acceptEdit}  onChange={() => this.valueChanged()} ref="minCount" type="text" value={minCountValue}/>
+			</div>
+		<label className="control-label col-xs-2">Size:</label>
+			<div className="col-xs-3">
+				<input className="form-control input-sm" disabled={!this.props.acceptEdit} onChange={() => this.valueChanged()} ref="size" type="text" value={sizeValue}/>
+			</div>
 		</div> )
 	}
 	
@@ -125,7 +133,11 @@ class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
 		if (dimValue === undefined) {
 			dimValue = "";			
 		}
-		return (<div><label>Dim:</label><input className="thin" onChange={() => this.valueChanged()} ref="dim" type="text" value={dimValue}/> </div>)
+		return (<div><label className="control-label col-xs-2">Dim:</label>
+			<div className = "col-xs-3">
+				<input className="form-control input-sm" disabled={!this.props.acceptEdit} onChange={() => this.valueChanged()} ref="dim" type="text" value={dimValue}/> 
+			</div>
+		</div>)
 	}
 	
 	private getLabelElements():JSX.Element {
@@ -133,7 +145,12 @@ class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
 		if (filterValue === undefined) {
 			filterValue = "";
 		}
-		return (<div><label>Filter:</label><input className="thin" onChange={() => this.valueChanged()} ref="filter" type="text" value={filterValue}/></div>)
+		return (<div>
+			<label className="control-label col-xs-2">Filter:</label>
+			<div className = "col-xs-3">
+				<input className="form-control input-sm" disabled={!this.props.acceptEdit} onChange={() => this.valueChanged()} ref="filter" type="text" value={filterValue}/>
+			</div>				
+		</div>)
 	}
 	
 	
@@ -159,15 +176,17 @@ class DatatypeComponent extends React.Component<IDatatypeProps, {}> {
 	
 	public render():JSX.Element {
 		return (
-			<div className="row">
+			<div className="row form-group">
 			<div className="col-xs-2">
 			<strong>{this.props.type.column}</strong>
 			</div>
-			<div className="col-xs-2">
+			<div className="col-xs-3">
 			{this.getDatatypeSelect()}
 			</div>
-			<div className="col-xs-8">
+			<div className="col-xs-7">
+				<div className="row">
 				{this.getTypeSpecificElements()}
+				</div>
 			</div>					
 			</div>			
 		)
@@ -190,16 +209,26 @@ export class DatatypeMapperTable extends React.Component<IDatatypeMapperTablePro
 	}
 	
 	private getDatatypes():JSX.Element[] {
-		return this.props.datatypes.map(dt => <DatatypeComponent type={dt} availableTypes={this.props.availableTypes} />)
+		var result:JSX.Element[] = [];
+		for (var i=0;i<this.props.datatypes.length;i++) {
+			var dt = this.props.datatypes[i];
+			if (this.props.acceptEdit || dt.datatype != "Ignore") {
+				result.push(<DatatypeComponent type={dt} availableTypes={this.props.availableTypes} acceptEdit={this.props.acceptEdit}/>);		
+			}
+		}
+		
+		return result;
 	}		
 		
 	public render():JSX.Element {
 		var headers = this.props.datatypes.map(dt => dt.column);
+		var createButton = this.props.acceptEdit?
+			<input className="btn btn-primary" type="button" value="Create.." onClick={() => this.handleCreateMapper()}/>:null;
 		return (<div>						
 				<ExampleTableComponent headers={headers} examples={this.props.examples}/>
 				<h4>Datatype mapping</h4>
 				{this.getDatatypes()}				
-				<input type="button" disabled={!this.props.acceptEdit} value="Create.." onClick={() => this.handleCreateMapper()}/>
+				{createButton}	
 				</div>
 			)
 	}	
@@ -208,6 +237,8 @@ export class DatatypeMapperTable extends React.Component<IDatatypeMapperTablePro
 
 export interface INetworkProps {
 	hiddenLayers:number[];
+	inputDimension:number;
+	outputDimension:number;
 	acceptEdit:boolean;
 }
 
@@ -230,15 +261,17 @@ class LayerComponent extends React.Component<ILayerProps, {}> {
 export class NetworkComponent extends React.Component<INetworkProps, {}> {
 			
 	private handleChange(index:number) {
-		var refId = "l_"+index.toString();				
-		var c = this.refs[refId] as React.ClassicComponent<any, any>;			 
-		var value = c.getDOMNode<HTMLInputElement>().value;					
-		var numValue = Number(value);	
-		if (!isNaN(numValue)) {
-			var copy:number[] = [...this.props.hiddenLayers];			
-			copy[index] = numValue;
-			Actions.Experiment.LayersChanged(copy);
-		}	
+		if (this.props.acceptEdit) {
+			var refId = "l_"+index.toString();				
+			var c = this.refs[refId] as React.ClassicComponent<any, any>;			 
+			var value = c.getDOMNode<HTMLInputElement>().value;					
+			var numValue = Number(value);	
+			if (!isNaN(numValue)) {
+				var copy:number[] = [...this.props.hiddenLayers];			
+				copy[index] = numValue;
+				Actions.Experiment.LayersChanged(copy);
+			}	
+		}
 	}
 	
 	private getLayerElement(index:number):JSX.Element {
@@ -246,7 +279,7 @@ export class NetworkComponent extends React.Component<INetworkProps, {}> {
 		var value = this.props.hiddenLayers[index].toString();
 		return (<div className="row">
 			<div className="col-xs-1"><label>Nodes:</label></div>
-			<div className="col-xs-1"><input ref={refId} onChange={() => this.handleChange(index)} type="text" value={value} /></div>
+			<div className="col-xs-2"><input className="form-control" disabled={!this.props.acceptEdit} ref={refId} onChange={() => this.handleChange(index)} type="text" value={value} /></div>
 		</div>);	
 	}
 	
@@ -257,8 +290,10 @@ export class NetworkComponent extends React.Component<INetworkProps, {}> {
 				elements.push(this.getLayerElement(i));								
 			}
 		}
-		var addElement =(<div className="row"><div className="col-xs-offset-1 col-xs-1"><input onClick={() => this.addLayer()} type="button" value="Add..."/></div></div>); 
-		elements.push(addElement);
+		if (this.props.acceptEdit) {
+			var addElement =(<div className="row"><div className="col-xs-offset-1 col-xs-1"><input className="btn btn-success" onClick={() => this.addLayer()} type="button" value="Add..."/></div></div>); 
+			elements.push(addElement);
+		}
 		return elements;
 	}
 	
@@ -268,10 +303,25 @@ export class NetworkComponent extends React.Component<INetworkProps, {}> {
 		Actions.Experiment.LayersChanged(copy);	
 	}
 		
+	private getInputLayer():JSX.Element {
+		return (<div className="row">
+			<div className="col-xs-1"><label>Input:</label></div>
+			<div className="col-xs-1"><label>{this.props.inputDimension}</label></div>
+		</div>)	
+	}		
+	private getOutputLayer():JSX.Element {
+		return (<div className="row">
+			<div className="col-xs-1"><label>Output:</label></div>
+			<div className="col-xs-1"><label>{this.props.outputDimension}</label></div>
+		</div>)	
+	}		
+		
 	public render():JSX.Element {
 		return (<div>			
-			<h4>Hidden layers</h4>
-			{this.getLayerElements()}						
+			<h4>Network</h4>
+			{this.getInputLayer()}
+			{this.getLayerElements()}
+			{this.getOutputLayer()}						
 		</div>)
 	}
 }

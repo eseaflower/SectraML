@@ -5,6 +5,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var React = require("react");
 var ExperimentStore = require("../stores/ExperimentStore");
+var NavigationStore = require("../stores/NavigationStore");
 var ExperimentComponent = require("./Experiment");
 var Actions = require("../actions/actions");
 var ExperimentController = (function (_super) {
@@ -17,13 +18,16 @@ var ExperimentController = (function (_super) {
     }
     ExperimentController.prototype.componentDidMount = function () {
         ExperimentStore.Instance.addChangeListener(this.changeEventHandler);
+        NavigationStore.Instance.addChangeListener(this.changeEventHandler);
     };
     ExperimentController.prototype.componentWillUnmount = function () {
         ExperimentStore.Instance.removeChangeListener(this.changeEventHandler);
+        NavigationStore.Instance.removeChangeListener(this.changeEventHandler);
     };
     ExperimentController.prototype.buildState = function () {
         var experimentData = ExperimentStore.Instance.getState();
         return {
+            mode: NavigationStore.Instance.getActiveType(),
             message: experimentData.message,
             readyForTraining: experimentData.readyForTraining,
             readyForMapping: experimentData.readyForMapping,
@@ -36,7 +40,9 @@ var ExperimentController = (function (_super) {
             },
             networkProps: {
                 hiddenLayers: experimentData.hiddenLayers,
-                acceptEdit: experimentData.readyForNetwork
+                acceptEdit: experimentData.readyForNetwork,
+                inputDimension: experimentData.inputDimension,
+                outputDimension: experimentData.outputDimension
             },
             predictProps: {
                 datatypes: experimentData.datatypes,
@@ -52,18 +58,32 @@ var ExperimentController = (function (_super) {
     ExperimentController.prototype.doTrain = function () {
         Actions.Experiment.CommitTraining();
     };
-    ExperimentController.prototype.render = function () {
+    ExperimentController.prototype.getCreateElement = function () {
         var _this = this;
-        var alertElement = this.state.message != null ? React.createElement("div", {"className": "alert"}, this.state.message) : null;
+        if (this.state.mode != "Create") {
+            return null;
+        }
         var uploadElement = this.state.mapperProps.datatypes == null ? React.createElement(ExperimentComponent.FileUploadComponent, null) : null;
         var mapperElement = this.state.mapperProps.datatypes != null ?
             React.createElement(ExperimentComponent.DatatypeMapperTable, React.__spread({}, this.state.mapperProps)) : null;
         var networkElement = this.state.networkProps.hiddenLayers != null ?
             React.createElement(ExperimentComponent.NetworkComponent, React.__spread({}, this.state.networkProps)) : null;
-        var trainElement = this.state.readyForTraining ? React.createElement("input", {"type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        var trainElement = this.state.readyForTraining ? React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, this.getAlertElement()));
+    };
+    ExperimentController.prototype.getPredictElement = function () {
+        if (this.state.mode != "Predict") {
+            return null;
+        }
         var predictElement = this.state.predictProps.example != null ?
             React.createElement(ExperimentComponent.PredictComponent, React.__spread({}, this.state.predictProps)) : null;
-        return (React.createElement("div", {"className": "col-xs-10"}, alertElement, uploadElement, mapperElement, networkElement, trainElement, predictElement));
+        return (React.createElement("div", null, predictElement));
+    };
+    ExperimentController.prototype.getAlertElement = function () {
+        return this.state.message != null ? React.createElement("div", {"className": "alert alert-info"}, this.state.message) : null;
+    };
+    ExperimentController.prototype.render = function () {
+        return (React.createElement("div", {"className": "col-xs-10"}, this.getCreateElement(), this.getPredictElement()));
     };
     return ExperimentController;
 })(React.Component);

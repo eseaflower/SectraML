@@ -17,7 +17,7 @@ var FileUploadComponent = (function (_super) {
     };
     FileUploadComponent.prototype.render = function () {
         var _this = this;
-        return (React.createElement("div", null, React.createElement("label", null, "Data file"), React.createElement("input", {"className": "wide", "ref": "filename", "type": "file"}), React.createElement("input", {"value": "Upload...", "type": "button", "onClick": function () { return _this.handleUpload(); }})));
+        return (React.createElement("div", null, React.createElement("input", {"onChange": function () { return _this.handleUpload(); }, "ref": "filename", "type": "file"})));
     };
     return FileUploadComponent;
 })(React.Component);
@@ -51,13 +51,15 @@ var DatatypeComponent = (function (_super) {
         return this.props.availableTypes.map(function (type) { return React.createElement("option", {"value": type}, type); });
     };
     DatatypeComponent.prototype.valueChanged = function () {
-        var component = this.refs["selectedValue"];
-        var datatype = component.getDOMNode().value;
-        Actions.Experiment.DatatypeChanged({ column: this.props.type.column, datatype: datatype, custom: this.getCustomValues() });
+        if (this.props.acceptEdit) {
+            var component = this.refs["selectedValue"];
+            var datatype = component.getDOMNode().value;
+            Actions.Experiment.DatatypeChanged({ column: this.props.type.column, datatype: datatype, custom: this.getCustomValues() });
+        }
     };
     DatatypeComponent.prototype.getDatatypeSelect = function () {
         var _this = this;
-        return (React.createElement("select", {"onChange": function () { return _this.valueChanged(); }, "ref": "selectedValue", "value": this.props.type.datatype}, this.getOptions()));
+        return (React.createElement("select", {"className": "form-control", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "selectedValue", "value": this.props.type.datatype}, this.getOptions()));
     };
     DatatypeComponent.prototype.getElementValue = function (id) {
         var comp = this.refs[id];
@@ -97,7 +99,7 @@ var DatatypeComponent = (function (_super) {
         if (sizeValue === undefined) {
             sizeValue = "";
         }
-        return (React.createElement("div", null, React.createElement("label", null, "Min count:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "minCount", "type": "text", "value": minCountValue}), React.createElement("label", null, "Size:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "size", "type": "text", "value": sizeValue})));
+        return (React.createElement("div", null, React.createElement("label", {"className": "control-label col-xs-2"}, "Count:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "minCount", "type": "text", "value": minCountValue})), React.createElement("label", {"className": "control-label col-xs-2"}, "Size:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "size", "type": "text", "value": sizeValue}))));
     };
     DatatypeComponent.prototype.getNumberElements = function () {
         var _this = this;
@@ -105,7 +107,7 @@ var DatatypeComponent = (function (_super) {
         if (dimValue === undefined) {
             dimValue = "";
         }
-        return (React.createElement("div", null, React.createElement("label", null, "Dim:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "dim", "type": "text", "value": dimValue}), " "));
+        return (React.createElement("div", null, React.createElement("label", {"className": "control-label col-xs-2"}, "Dim:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "dim", "type": "text", "value": dimValue}))));
     };
     DatatypeComponent.prototype.getLabelElements = function () {
         var _this = this;
@@ -113,7 +115,7 @@ var DatatypeComponent = (function (_super) {
         if (filterValue === undefined) {
             filterValue = "";
         }
-        return (React.createElement("div", null, React.createElement("label", null, "Filter:"), React.createElement("input", {"className": "thin", "onChange": function () { return _this.valueChanged(); }, "ref": "filter", "type": "text", "value": filterValue})));
+        return (React.createElement("div", null, React.createElement("label", {"className": "control-label col-xs-2"}, "Filter:"), React.createElement("div", {"className": "col-xs-3"}, React.createElement("input", {"className": "form-control input-sm", "disabled": !this.props.acceptEdit, "onChange": function () { return _this.valueChanged(); }, "ref": "filter", "type": "text", "value": filterValue}))));
     };
     DatatypeComponent.prototype.getTypeSpecificElements = function () {
         switch (this.props.type.datatype) {
@@ -135,7 +137,7 @@ var DatatypeComponent = (function (_super) {
         return null;
     };
     DatatypeComponent.prototype.render = function () {
-        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-2"}, React.createElement("strong", null, this.props.type.column)), React.createElement("div", {"className": "col-xs-2"}, this.getDatatypeSelect()), React.createElement("div", {"className": "col-xs-8"}, this.getTypeSpecificElements())));
+        return (React.createElement("div", {"className": "row form-group"}, React.createElement("div", {"className": "col-xs-2"}, React.createElement("strong", null, this.props.type.column)), React.createElement("div", {"className": "col-xs-3"}, this.getDatatypeSelect()), React.createElement("div", {"className": "col-xs-7"}, React.createElement("div", {"className": "row"}, this.getTypeSpecificElements()))));
     };
     return DatatypeComponent;
 })(React.Component);
@@ -150,13 +152,21 @@ var DatatypeMapperTable = (function (_super) {
         }
     };
     DatatypeMapperTable.prototype.getDatatypes = function () {
-        var _this = this;
-        return this.props.datatypes.map(function (dt) { return React.createElement(DatatypeComponent, {"type": dt, "availableTypes": _this.props.availableTypes}); });
+        var result = [];
+        for (var i = 0; i < this.props.datatypes.length; i++) {
+            var dt = this.props.datatypes[i];
+            if (this.props.acceptEdit || dt.datatype != "Ignore") {
+                result.push(React.createElement(DatatypeComponent, {"type": dt, "availableTypes": this.props.availableTypes, "acceptEdit": this.props.acceptEdit}));
+            }
+        }
+        return result;
     };
     DatatypeMapperTable.prototype.render = function () {
         var _this = this;
         var headers = this.props.datatypes.map(function (dt) { return dt.column; });
-        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), React.createElement("h4", null, "Datatype mapping"), this.getDatatypes(), React.createElement("input", {"type": "button", "disabled": !this.props.acceptEdit, "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }})));
+        var createButton = this.props.acceptEdit ?
+            React.createElement("input", {"className": "btn btn-primary", "type": "button", "value": "Create..", "onClick": function () { return _this.handleCreateMapper(); }}) : null;
+        return (React.createElement("div", null, React.createElement(ExampleTableComponent, {"headers": headers, "examples": this.props.examples}), React.createElement("h4", null, "Datatype mapping"), this.getDatatypes(), createButton));
     };
     return DatatypeMapperTable;
 })(React.Component);
@@ -178,21 +188,23 @@ var NetworkComponent = (function (_super) {
         _super.apply(this, arguments);
     }
     NetworkComponent.prototype.handleChange = function (index) {
-        var refId = "l_" + index.toString();
-        var c = this.refs[refId];
-        var value = c.getDOMNode().value;
-        var numValue = Number(value);
-        if (!isNaN(numValue)) {
-            var copy = this.props.hiddenLayers.slice();
-            copy[index] = numValue;
-            Actions.Experiment.LayersChanged(copy);
+        if (this.props.acceptEdit) {
+            var refId = "l_" + index.toString();
+            var c = this.refs[refId];
+            var value = c.getDOMNode().value;
+            var numValue = Number(value);
+            if (!isNaN(numValue)) {
+                var copy = this.props.hiddenLayers.slice();
+                copy[index] = numValue;
+                Actions.Experiment.LayersChanged(copy);
+            }
         }
     };
     NetworkComponent.prototype.getLayerElement = function (index) {
         var _this = this;
         var refId = "l_" + index.toString();
         var value = this.props.hiddenLayers[index].toString();
-        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("input", {"ref": refId, "onChange": function () { return _this.handleChange(index); }, "type": "text", "value": value}))));
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Nodes:")), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"className": "form-control", "disabled": !this.props.acceptEdit, "ref": refId, "onChange": function () { return _this.handleChange(index); }, "type": "text", "value": value}))));
     };
     NetworkComponent.prototype.getLayerElements = function () {
         var _this = this;
@@ -202,8 +214,10 @@ var NetworkComponent = (function (_super) {
                 elements.push(this.getLayerElement(i));
             }
         }
-        var addElement = (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-offset-1 col-xs-1"}, React.createElement("input", {"onClick": function () { return _this.addLayer(); }, "type": "button", "value": "Add..."}))));
-        elements.push(addElement);
+        if (this.props.acceptEdit) {
+            var addElement = (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-offset-1 col-xs-1"}, React.createElement("input", {"className": "btn btn-success", "onClick": function () { return _this.addLayer(); }, "type": "button", "value": "Add..."}))));
+            elements.push(addElement);
+        }
         return elements;
     };
     NetworkComponent.prototype.addLayer = function () {
@@ -211,8 +225,14 @@ var NetworkComponent = (function (_super) {
         copy.push(0);
         Actions.Experiment.LayersChanged(copy);
     };
+    NetworkComponent.prototype.getInputLayer = function () {
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Input:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, this.props.inputDimension))));
+    };
+    NetworkComponent.prototype.getOutputLayer = function () {
+        return (React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, "Output:")), React.createElement("div", {"className": "col-xs-1"}, React.createElement("label", null, this.props.outputDimension))));
+    };
     NetworkComponent.prototype.render = function () {
-        return (React.createElement("div", null, React.createElement("h4", null, "Hidden layers"), this.getLayerElements()));
+        return (React.createElement("div", null, React.createElement("h4", null, "Network"), this.getInputLayer(), this.getLayerElements(), this.getOutputLayer()));
     };
     return NetworkComponent;
 })(React.Component);

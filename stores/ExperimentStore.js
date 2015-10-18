@@ -15,6 +15,8 @@ var ExperimentStore = (function (_super) {
             examples: null,
             message: null,
             datatypes: null,
+            inputDimension: null,
+            outputDimension: null,
             availableTypes: null,
             hiddenLayers: null,
             example: null,
@@ -36,6 +38,7 @@ var ExperimentStore = (function (_super) {
         this.dispatcher.register(Actions.Experiment.LAYERS_CHANGED, function (_) { return _this.layersChanged(_); });
         this.dispatcher.register(Actions.Experiment.COMMIT_TRAINING, function () { return _this.trainingCommited(); });
         this.dispatcher.register(Actions.Experiment.TRAINING_COMPLETE, function () { return _this.trainingComplete(); });
+        this.dispatcher.register(Actions.Experiment.TRAINING_FAILED, function (_) { return _this.trainingFailed(_); });
         this.dispatcher.register(Actions.Experiment.EXAMPLE_CHANGED, function (_) { return _this.exampleChanged(_); });
         this.dispatcher.register(Actions.Experiment.COMMIT_PREDICT, function () { return _this.predictCommited(); });
         this.dispatcher.register(Actions.Experiment.PREDICT_COMPLETE, function (_) { return _this.predictCompleted(_); });
@@ -72,12 +75,16 @@ var ExperimentStore = (function (_super) {
         if (this.experimentUrl != null) {
             this.state.readyForMapping = false;
             Actions.Experiment.UploadDatatypes(this.experimentUrl, this.state.datatypes);
+            this.state.message = "Creating data mapping...";
             this.emitChange();
         }
     };
     ExperimentStore.prototype.uploadDataTypesCompleted = function (data) {
-        this.state.datatypes = data;
-        this.state.readyForMapping = true;
+        this.state.message = null;
+        this.state.datatypes = data.mapping;
+        this.state.inputDimension = data.inputDimension;
+        this.state.outputDimension = data.outputDimension;
+        this.state.readyForMapping = false;
         this.state.readyForNetwork = true;
         this.state.readyForTraining = true;
         if (this.state.hiddenLayers == null) {
@@ -126,6 +133,7 @@ var ExperimentStore = (function (_super) {
             this.state.readyForNetwork = false;
             this.state.readyForTraining = false;
             this.state.example = null;
+            this.state.message = "Training model...";
             var layers = this.state.hiddenLayers != null ? this.state.hiddenLayers : [];
             Actions.Experiment.DoTraining(this.experimentUrl, { hiddenLayers: layers });
             this.emitChange();
@@ -133,6 +141,11 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.trainingComplete = function () {
         this.state.example = {};
+        this.state.message = "Prediction model available at " + this.experimentUrl + "?args={\"type\":\"predict\",\"data\":[<list of your data>]}";
+        this.emitChange();
+    };
+    ExperimentStore.prototype.trainingFailed = function (message) {
+        this.state.message = message;
         this.emitChange();
     };
     ExperimentStore.prototype.exampleChanged = function (val) {
