@@ -17,6 +17,7 @@ export interface IExperimentStoreState {
 	readyForMapping:boolean;
 	readyForTraining:boolean;	
 	readyForNetwork:boolean;
+	trainFigureUrl:string;
 }
 
 export class ExperimentStore extends Base.BaseStore {
@@ -43,7 +44,8 @@ export class ExperimentStore extends Base.BaseStore {
 			predicted:null,
 			readyForTraining:false,
 			readyForMapping:false,
-			readyForNetwork:false
+			readyForNetwork:false,
+			trainFigureUrl:null
 		};
 		this.experimentUrl = null;
 		this.fileUploadUrl = null;
@@ -181,6 +183,7 @@ export class ExperimentStore extends Base.BaseStore {
 	private trainingComplete() {
 		this.state.example = {};
 		this.state.message = "Prediction model available at " + this.experimentUrl + "?args={\"type\":\"predict\",\"data\":[<list of your data>]}";		
+		this.state.trainFigureUrl = this.experimentUrl+"?args="+JSON.stringify({type:"figure", data:Date.now()});
 		this.emitChange();
 	}
 	

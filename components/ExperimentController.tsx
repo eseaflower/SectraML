@@ -15,6 +15,7 @@ export interface IExperimentControllerState {
 	readyForTraining:boolean;	
 	readyForMapping:boolean;
 	readyForNetwork:boolean;
+	trainFigureUrl:string;
 	mode:string;
 
 }
@@ -44,7 +45,8 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 			message: experimentData.message,
 			readyForTraining: experimentData.readyForTraining,
 			readyForMapping: experimentData.readyForMapping,
-			readyForNetwork:experimentData.readyForNetwork,			
+			readyForNetwork:experimentData.readyForNetwork,
+			trainFigureUrl:experimentData.trainFigureUrl,			
 			mapperProps: {
 				availableTypes:experimentData.availableTypes,
 				examples: experimentData.examples,
@@ -88,6 +90,8 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 
 		var trainElement = this.state.readyForTraining?<ExperimentComponent.TrainingSettingsComponent {...this.state.trainingProps}/>:null;
 		var trainButtonElement = this.state.readyForTraining?<input className="btn btn-primary" type="button" onClick={()=>this.doTrain()} value="Train..."/> :null;
+		var figureElement = this.state.trainFigureUrl != null?
+			<img src={this.state.trainFigureUrl}/>:null;
 		
 		return (<div>
 			{uploadElement}
@@ -96,6 +100,7 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 			{trainElement}
 			{trainButtonElement}		
 			{this.getAlertElement()}
+			{figureElement}
 		</div>) 		
 	}
 	private getPredictElement():JSX.Element {

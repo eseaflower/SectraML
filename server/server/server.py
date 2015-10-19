@@ -8,6 +8,9 @@ from experiment import createExperiment, runExperiment, ExperimentFactory
 import time
 from inspect import getargspec
 
+import matplotlib.pyplot as plt
+import io
+
 
 class LoginHandler(tornado.web.RequestHandler):    
     @jsonmethod

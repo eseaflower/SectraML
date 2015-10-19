@@ -14,15 +14,18 @@ def jsonreturn(member):
         try:
             returnData = member(self, *args, **kwargs)
             if isinstance(returnData, JsonSerializable):
-                returnData = returnData.asSerializable()
+                returnData = returnData.asSerializable()            
         except ServerException as se:
             returnData = se.asSerializable()
             self.set_status(se.statusCode)
         
         # Write response in json
-        if returnData:
-            jsonReturnData = json.dumps(returnData)
-            self.write(jsonReturnData)
+        if returnData:            
+            if isinstance(returnData, RawReturn):
+                toWrite = returnData.getRawData()
+            else:
+                toWrite = json.dumps(returnData)
+            self.write(toWrite)
         self.finish()
     return inner
 
@@ -49,3 +52,9 @@ def toJsArgs(*args):
             argument = "\"{0}\"".format(argument)
         escaped.append(str(argument))
     return ",".join(escaped)
+
+class RawReturn(object):
+    def __init__(self, wrapped):
+        self.wrapped = wrapped
+    def getRawData(self):
+        return self.wrapped

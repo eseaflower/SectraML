@@ -29,7 +29,8 @@ var ExperimentStore = (function (_super) {
             predicted: null,
             readyForTraining: false,
             readyForMapping: false,
-            readyForNetwork: false
+            readyForNetwork: false,
+            trainFigureUrl: null
         };
         this.experimentUrl = null;
         this.fileUploadUrl = null;
@@ -152,6 +153,7 @@ var ExperimentStore = (function (_super) {
     ExperimentStore.prototype.trainingComplete = function () {
         this.state.example = {};
         this.state.message = "Prediction model available at " + this.experimentUrl + "?args={\"type\":\"predict\",\"data\":[<list of your data>]}";
+        this.state.trainFigureUrl = this.experimentUrl + "?args=" + JSON.stringify({ type: "figure", data: Date.now() });
         this.emitChange();
     };
     ExperimentStore.prototype.trainingFailed = function (message) {

@@ -32,6 +32,7 @@ var ExperimentController = (function (_super) {
             readyForTraining: experimentData.readyForTraining,
             readyForMapping: experimentData.readyForMapping,
             readyForNetwork: experimentData.readyForNetwork,
+            trainFigureUrl: experimentData.trainFigureUrl,
             mapperProps: {
                 availableTypes: experimentData.availableTypes,
                 examples: experimentData.examples,
@@ -71,7 +72,9 @@ var ExperimentController = (function (_super) {
             React.createElement(ExperimentComponent.NetworkComponent, React.__spread({}, this.state.networkProps)) : null;
         var trainElement = this.state.readyForTraining ? React.createElement(ExperimentComponent.TrainingSettingsComponent, React.__spread({}, this.state.trainingProps)) : null;
         var trainButtonElement = this.state.readyForTraining ? React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
-        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, trainButtonElement, this.getAlertElement()));
+        var figureElement = this.state.trainFigureUrl != null ?
+            React.createElement("img", {"src": this.state.trainFigureUrl}) : null;
+        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, trainButtonElement, this.getAlertElement(), figureElement));
     };
     ExperimentController.prototype.getPredictElement = function () {
         if (this.state.mode != "Predict") {

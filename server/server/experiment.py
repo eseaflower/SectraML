@@ -1,5 +1,5 @@
 import CSVLoader
-from serverutil import JsonSerializable
+from serverutil import JsonSerializable, RawReturn
 import featuremapping
 import theano
 import theano.tensor as T
@@ -35,7 +35,7 @@ class ExperimentFactory(object):
         #Build the mapper based on the training data.
         itemMapper = buildMapper(trainData, headers, dataMapping)
         itemMapperFilename = "{0}/mapper.pkl".format(experimentDir)
-        save(itemMapperFilename, itemMapper)
+        save(itemMapperFilename, itemMapper, useCloud=True)
 
         result = {"mapping":dataMapping, 
                   "inputDimension":itemMapper.dimension, 
@@ -145,6 +145,24 @@ class ExperimentFactory(object):
         # Save all relevant model data, include normalization if this is used.
         save(modelFilename, x, y, classifier)
 
+        # Save the training plots.
+        validation_scores = [item["validation_score"] for item in stats]
+        train_scorees = [item["training_costs"][-1] for item in stats]        
+        plt.plot(train_scorees, 'r', label="Training (regularized)")
+        plt.plot(validation_scores, 'g', label="Validation")
+        plt.legend(loc="upper right")
+        plt.ylabel("Score")
+        plt.xlabel("Run #")
+        figureFilename = "{0}/fig.png".format(experimentDir)
+        plt.savefig(figureFilename)        
+        plt.close()
+
+
+    def figure(self, figureArgs):
+        experimentDir = getCreateExperimentDir(self.id)
+        figureFilename = "{0}/fig.png".format(experimentDir)
+        with open(figureFilename, "rb") as f:
+            return RawReturn(f.read())
 
     def predict(self, data):
         experimentDir = getCreateExperimentDir(self.id)
@@ -195,9 +213,13 @@ def toLookup(filename):
     return result, set(headers)
     
 
-def save(filename, *args):
+def save(filename, *args, useCloud=False):
+    pklFun = pickle.dump
+    if useCloud:
+        pklFun = cloudpickle.dump
     with open(filename, "wb") as f:
-        cloudpickle.dump(args, f)
+        pklFun(args, f)
+
 def load(filename):
     with open(filename, "rb") as f:
         return pickle.load(f)
