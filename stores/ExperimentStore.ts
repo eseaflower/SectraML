@@ -12,6 +12,7 @@ export interface IExperimentStoreState {
 	hiddenLayers:number[];
 	availableTypes:string[];
 	example:{[key:string]:string};
+	trainingSettings:Actions.ITrainingSettings;	
 	predicted:string;
 	readyForMapping:boolean;
 	readyForTraining:boolean;	
@@ -33,6 +34,12 @@ export class ExperimentStore extends Base.BaseStore {
 			availableTypes:null, 
 			hiddenLayers:null,
 			example:null,
+			trainingSettings:{
+				learningRate:"0.001",
+				regularization:"0.0001",
+				epochsPerRun:"1",
+				runs:"10"
+			},
 			predicted:null,
 			readyForTraining:false,
 			readyForMapping:false,
@@ -54,7 +61,8 @@ export class ExperimentStore extends Base.BaseStore {
 		this.dispatcher.register<string>(Actions.Experiment.TRAINING_FAILED, (_) => this.trainingFailed(_));
 		this.dispatcher.register<{column:string, value:string}>(Actions.Experiment.EXAMPLE_CHANGED, (_)=>this.exampleChanged(_));
 		this.dispatcher.register(Actions.Experiment.COMMIT_PREDICT, ()=>this.predictCommited());
-		this.dispatcher.register<string>(Actions.Experiment.PREDICT_COMPLETE, (_)=>this.predictCompleted(_));	
+		this.dispatcher.register<string>(Actions.Experiment.PREDICT_COMPLETE, (_)=>this.predictCompleted(_));
+		this.dispatcher.register<Actions.ITrainingSettings>(Actions.Experiment.TRAINING_SETTINGS_CHANGED, (_)=>this.trainingSettingsChanged(_))	
 	}	
 	
 	public getState():IExperimentStoreState {		
@@ -161,7 +169,11 @@ export class ExperimentStore extends Base.BaseStore {
 			this.state.example = null;
 			this.state.message = "Training model..."
 			var layers = this.state.hiddenLayers != null?this.state.hiddenLayers:[];
-			Actions.Experiment.DoTraining(this.experimentUrl, {hiddenLayers:layers});
+			Actions.Experiment.DoTraining(this.experimentUrl, 
+				{	
+					hiddenLayers:layers,
+					settings:this.state.trainingSettings
+				});
 			this.emitChange();
 		}
 	}
@@ -202,6 +214,11 @@ export class ExperimentStore extends Base.BaseStore {
 	}
 	private predictCompleted(value:string) {
 		this.state.predicted = value;
+		this.emitChange();
+	}
+	
+	private trainingSettingsChanged(data:Actions.ITrainingSettings) {
+		this.state.trainingSettings = data;
 		this.emitChange();
 	}
 }

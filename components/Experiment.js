@@ -237,6 +237,44 @@ var NetworkComponent = (function (_super) {
     return NetworkComponent;
 })(React.Component);
 exports.NetworkComponent = NetworkComponent;
+var TrainingSettingsComponent = (function (_super) {
+    __extends(TrainingSettingsComponent, _super);
+    function TrainingSettingsComponent() {
+        _super.apply(this, arguments);
+    }
+    TrainingSettingsComponent.prototype.handleChange = function () {
+        var newSettings = this.getValues();
+        Actions.Experiment.TrainingSettingsChanged(newSettings);
+    };
+    TrainingSettingsComponent.prototype.getElementValue = function (id) {
+        var comp = this.refs[id];
+        var result = null;
+        if (comp != null) {
+            result = comp.getDOMNode().value;
+        }
+        return result;
+    };
+    TrainingSettingsComponent.prototype.getValues = function () {
+        return {
+            learningRate: this.getElementValue("lr"),
+            regularization: this.getElementValue("reg"),
+            epochsPerRun: this.getElementValue("eprun"),
+            runs: this.getElementValue("run")
+        };
+    };
+    TrainingSettingsComponent.prototype.safeToString = function (val) {
+        if (val == null) {
+            return "";
+        }
+        return val.toString();
+    };
+    TrainingSettingsComponent.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", null, React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Learning rate:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "lr", "className": "form-control", "value": this.props.learningRate}))), React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Regularization:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "reg", "className": "form-control", "value": this.props.regularization}))), React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Epochs/run:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "eprun", "className": "form-control", "value": this.props.epochsPerRun}))), React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Runs:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "run", "className": "form-control", "value": this.props.runs})))));
+    };
+    return TrainingSettingsComponent;
+})(React.Component);
+exports.TrainingSettingsComponent = TrainingSettingsComponent;
 var PredictComponent = (function (_super) {
     __extends(PredictComponent, _super);
     function PredictComponent() {
@@ -272,7 +310,7 @@ var PredictComponent = (function (_super) {
     };
     PredictComponent.prototype.render = function () {
         var _this = this;
-        return (React.createElement("div", null, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, this.getColumnHeaders())), React.createElement("tbody", null, this.getExample())), React.createElement("input", {"type": "button", "onClick": function () { return _this.commitPredict(); }, "value": "Predict..."})));
+        return (React.createElement("div", null, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, this.getColumnHeaders())), React.createElement("tbody", null, this.getExample())), React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.commitPredict(); }, "value": "Predict..."})))));
     };
     return PredictComponent;
 })(React.Component);

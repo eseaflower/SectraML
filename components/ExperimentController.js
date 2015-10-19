@@ -44,6 +44,7 @@ var ExperimentController = (function (_super) {
                 inputDimension: experimentData.inputDimension,
                 outputDimension: experimentData.outputDimension
             },
+            trainingProps: experimentData.trainingSettings,
             predictProps: {
                 datatypes: experimentData.datatypes,
                 example: experimentData.example,
@@ -68,8 +69,9 @@ var ExperimentController = (function (_super) {
             React.createElement(ExperimentComponent.DatatypeMapperTable, React.__spread({}, this.state.mapperProps)) : null;
         var networkElement = this.state.networkProps.hiddenLayers != null ?
             React.createElement(ExperimentComponent.NetworkComponent, React.__spread({}, this.state.networkProps)) : null;
-        var trainElement = this.state.readyForTraining ? React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
-        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, this.getAlertElement()));
+        var trainElement = this.state.readyForTraining ? React.createElement(ExperimentComponent.TrainingSettingsComponent, React.__spread({}, this.state.trainingProps)) : null;
+        var trainButtonElement = this.state.readyForTraining ? React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, trainButtonElement, this.getAlertElement()));
     };
     ExperimentController.prototype.getPredictElement = function () {
         if (this.state.mode != "Predict") {

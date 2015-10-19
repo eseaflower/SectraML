@@ -20,6 +20,12 @@ var ExperimentStore = (function (_super) {
             availableTypes: null,
             hiddenLayers: null,
             example: null,
+            trainingSettings: {
+                learningRate: "0.001",
+                regularization: "0.0001",
+                epochsPerRun: "1",
+                runs: "10"
+            },
             predicted: null,
             readyForTraining: false,
             readyForMapping: false,
@@ -42,6 +48,7 @@ var ExperimentStore = (function (_super) {
         this.dispatcher.register(Actions.Experiment.EXAMPLE_CHANGED, function (_) { return _this.exampleChanged(_); });
         this.dispatcher.register(Actions.Experiment.COMMIT_PREDICT, function () { return _this.predictCommited(); });
         this.dispatcher.register(Actions.Experiment.PREDICT_COMPLETE, function (_) { return _this.predictCompleted(_); });
+        this.dispatcher.register(Actions.Experiment.TRAINING_SETTINGS_CHANGED, function (_) { return _this.trainingSettingsChanged(_); });
     }
     ExperimentStore.prototype.getState = function () {
         return $.extend({}, this.state);
@@ -135,7 +142,10 @@ var ExperimentStore = (function (_super) {
             this.state.example = null;
             this.state.message = "Training model...";
             var layers = this.state.hiddenLayers != null ? this.state.hiddenLayers : [];
-            Actions.Experiment.DoTraining(this.experimentUrl, { hiddenLayers: layers });
+            Actions.Experiment.DoTraining(this.experimentUrl, {
+                hiddenLayers: layers,
+                settings: this.state.trainingSettings
+            });
             this.emitChange();
         }
     };
@@ -172,6 +182,10 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.predictCompleted = function (value) {
         this.state.predicted = value;
+        this.emitChange();
+    };
+    ExperimentStore.prototype.trainingSettingsChanged = function (data) {
+        this.state.trainingSettings = data;
         this.emitChange();
     };
     return ExperimentStore;

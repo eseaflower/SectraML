@@ -13,7 +13,7 @@ def splitUpper(item):
 
 
 def shingler(item):
-    shingleLength = 3
+    shingleLength = 4
     start = splitUpper(item)
     string = ''.join(start)
     if len(string) < shingleLength:

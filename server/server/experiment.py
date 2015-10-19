@@ -104,7 +104,10 @@ class ExperimentFactory(object):
 #                                                                (100, nnlayer.ReluLayer),
 #                                                               (output_dimension, nnlayer.LogisticRegressionLayer)])
 
-        cost = classifier.cost(y) + 0.0001*classifier.L2_sqr
+        
+        settings = trainArgs["settings"]
+        regularization = float(settings.get("regularization", "0.0001"))
+        cost = classifier.cost(y) + regularization*classifier.L2_sqr
         costParams = []
         costParams.extend(classifier.params)
         costFunction = (costParams, cost)
@@ -126,12 +129,15 @@ class ExperimentFactory(object):
         epochFunction, stateMananger = tt.getEpochTrainer(costFunction, variableAndData, batch_size=64, rms = True)        
         
         # Train with adaptive learning rate.
+        initial_lr = float(settings.get("learningRate", "0.01"))
+        eprun = int(settings.get("epochsPerRun", "1"))
+        runs = int(settings.get("runs", "10"))
         stats = tt.trainALR(epochFunction, 
                             valid_func, 
-                            initial_learning_rate=0.01, 
-                            epochs=2, 
+                            initial_learning_rate=initial_lr, 
+                            epochs=eprun, 
                             convergence_criteria=0.0001, 
-                            max_runs=10,
+                            max_runs=runs,
                             state_manager = stateMananger)
 
         experimentDir = getCreateExperimentDir(self.id)

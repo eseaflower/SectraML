@@ -10,6 +10,7 @@ export interface IExperimentControllerState {
 	mapperProps:ExperimentComponent.IDatatypeMapperTableProps;
 	networkProps:ExperimentComponent.INetworkProps;
 	message:string;
+	trainingProps:Actions.ITrainingSettings,
 	predictProps:ExperimentComponent.IPredictProps;
 	readyForTraining:boolean;	
 	readyForMapping:boolean;
@@ -56,6 +57,7 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 				inputDimension:experimentData.inputDimension,
 				outputDimension:experimentData.outputDimension
 			},
+			trainingProps:experimentData.trainingSettings,
 			predictProps: {
 				datatypes:experimentData.datatypes,
 				example:experimentData.example,
@@ -84,12 +86,15 @@ export class ExperimentController extends React.Component<{}, IExperimentControl
 		var networkElement = this.state.networkProps.hiddenLayers != null?
 			<ExperimentComponent.NetworkComponent {...this.state.networkProps}/>:null;
 
-		var trainElement = this.state.readyForTraining?<input className="btn btn-primary" type="button" onClick={()=>this.doTrain()} value="Train..."/>:null;
+		var trainElement = this.state.readyForTraining?<ExperimentComponent.TrainingSettingsComponent {...this.state.trainingProps}/>:null;
+		var trainButtonElement = this.state.readyForTraining?<input className="btn btn-primary" type="button" onClick={()=>this.doTrain()} value="Train..."/> :null;
+		
 		return (<div>
 			{uploadElement}
 			{mapperElement}
 			{networkElement}
-			{trainElement}		
+			{trainElement}
+			{trainButtonElement}		
 			{this.getAlertElement()}
 		</div>) 		
 	}

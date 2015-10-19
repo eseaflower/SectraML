@@ -75,6 +75,7 @@ var _Experiment = (function () {
         this.COMMIT_PREDICT = "COMMIT_PREDICT";
         this.PREDICT_COMPLETE = "PREDICT_COMPLETE";
         this.PREDICT_FAILED = "PREDICT_FAILED";
+        this.TRAINING_SETTINGS_CHANGED = "TRAINING_SETTINGS_CHANGED";
     }
     _Experiment.prototype.CommitDatatypes = function () {
         AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: null });
@@ -138,6 +139,9 @@ var _Experiment = (function () {
     };
     _Experiment.prototype.CommitPredict = function () {
         AppDispatcher.Dispatcher.dispatch({ type: this.COMMIT_PREDICT, data: null });
+    };
+    _Experiment.prototype.TrainingSettingsChanged = function (values) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.TRAINING_SETTINGS_CHANGED, data: values });
     };
     return _Experiment;
 })();

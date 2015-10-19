@@ -96,11 +96,20 @@ export interface IDataMappingResult {
 
 export interface ITrainingParams {
 	hiddenLayers:number[];
+	settings:ITrainingSettings;
 }
 
 export interface ITrainingResult {
 	
 }
+
+export interface ITrainingSettings {
+	learningRate:string;
+	regularization:string;
+	epochsPerRun:string;
+	runs:string;
+}
+
 
 class _Experiment {	
 	public DATATYPES_COMMITED:string;
@@ -115,6 +124,7 @@ class _Experiment {
 	public COMMIT_PREDICT:string;
 	public PREDICT_COMPLETE:string;
 	public PREDICT_FAILED:string;
+	public TRAINING_SETTINGS_CHANGED:string;
 	constructor() {
 		this.DATATYPES_COMMITED = "DATATYPES_COMMITED";
 		this.UPLOAD_DATATYPES_COMPLETE = "UPLOAD_DATATYPES_COMPLETE";
@@ -128,6 +138,7 @@ class _Experiment {
 		this.COMMIT_PREDICT = "COMMIT_PREDICT";
 		this.PREDICT_COMPLETE = "PREDICT_COMPLETE";
 		this.PREDICT_FAILED = "PREDICT_FAILED";
+		this.TRAINING_SETTINGS_CHANGED = "TRAINING_SETTINGS_CHANGED";
 	}	
 	public CommitDatatypes() {
 		AppDispatcher.Dispatcher.dispatch({type:this.DATATYPES_COMMITED, data:null});
@@ -195,6 +206,10 @@ class _Experiment {
 	
 	public CommitPredict() {
 		AppDispatcher.Dispatcher.dispatch({type:this.COMMIT_PREDICT, data:null});
+	}
+	
+	public TrainingSettingsChanged(values:ITrainingSettings) {
+		AppDispatcher.Dispatcher.dispatch({type:this.TRAINING_SETTINGS_CHANGED, data:values});
 	}
 	
 }

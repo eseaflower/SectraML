@@ -327,6 +327,68 @@ export class NetworkComponent extends React.Component<INetworkProps, {}> {
 }
 
 
+
+
+export class TrainingSettingsComponent extends React.Component<Actions.ITrainingSettings, {}> {
+	
+	
+	private handleChange() {
+		var newSettings = this.getValues();
+		Actions.Experiment.TrainingSettingsChanged(newSettings);
+	}
+		
+	private getElementValue(id:string):string {
+		var comp = this.refs[id] as React.ClassicComponent<any, any>;
+		var result = null;
+		if (comp != null) {
+			result = comp.getDOMNode<HTMLInputElement>().value;
+		}
+		return result;
+	}
+
+		
+	private getValues():Actions.ITrainingSettings {
+		return {
+			learningRate:this.getElementValue("lr"),
+			regularization:this.getElementValue("reg"),
+			epochsPerRun:this.getElementValue("eprun"),
+			runs:this.getElementValue("run")
+		}
+	}	
+
+	private safeToString(val:number) {
+		if (val == null) {
+			return "";
+		}
+		return val.toString();
+	}
+
+	public render():JSX.Element {
+		return (<div>
+			<div className="row">
+			<label className="col-xs-2">Learning rate:</label><div className="col-xs-2">
+				<input onChange={()=>this.handleChange()} ref="lr" className="form-control" value={this.props.learningRate}/></div>
+			</div>
+			<div className="row">
+			<label className="col-xs-2">Regularization:</label><div className="col-xs-2">
+				<input onChange={()=>this.handleChange()} ref="reg" className="form-control" value={this.props.regularization}/></div>
+			</div>
+			<div className="row">
+			<label className="col-xs-2">Epochs/run:</label><div className="col-xs-2">
+				<input onChange={()=>this.handleChange()} ref="eprun" className="form-control" value={this.props.epochsPerRun}/></div>
+			</div>
+			<div className="row">
+			<label className="col-xs-2">Runs:</label><div className="col-xs-2">
+				<input onChange={()=>this.handleChange()} ref="run" className="form-control" value={this.props.runs}/></div>
+			</div>
+		</div>
+		)
+	}
+}
+
+
+
+
 export interface IPredictProps {
 	datatypes:Actions.IDataType[];
 	example:{[key:string]:string};
@@ -379,7 +441,11 @@ export class PredictComponent extends React.Component<IPredictProps, {}> {
 			{this.getExample()}
 			</tbody>
 			</table>
-			<input type="button" onClick={()=>this.commitPredict()} value="Predict..."/>
+			<div className="row">
+			<div className="col-xs-2">
+			<input className="btn btn-primary" type="button" onClick={()=>this.commitPredict()} value="Predict..."/>
+			</div>
+			</div>
 			</div>);								
 		
 	}

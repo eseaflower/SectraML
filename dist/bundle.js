@@ -76,6 +76,7 @@ var _Experiment = (function () {
         this.COMMIT_PREDICT = "COMMIT_PREDICT";
         this.PREDICT_COMPLETE = "PREDICT_COMPLETE";
         this.PREDICT_FAILED = "PREDICT_FAILED";
+        this.TRAINING_SETTINGS_CHANGED = "TRAINING_SETTINGS_CHANGED";
     }
     _Experiment.prototype.CommitDatatypes = function () {
         AppDispatcher.Dispatcher.dispatch({ type: this.DATATYPES_COMMITED, data: null });
@@ -139,6 +140,9 @@ var _Experiment = (function () {
     };
     _Experiment.prototype.CommitPredict = function () {
         AppDispatcher.Dispatcher.dispatch({ type: this.COMMIT_PREDICT, data: null });
+    };
+    _Experiment.prototype.TrainingSettingsChanged = function (values) {
+        AppDispatcher.Dispatcher.dispatch({ type: this.TRAINING_SETTINGS_CHANGED, data: values });
     };
     return _Experiment;
 })();
@@ -413,6 +417,44 @@ var NetworkComponent = (function (_super) {
     return NetworkComponent;
 })(React.Component);
 exports.NetworkComponent = NetworkComponent;
+var TrainingSettingsComponent = (function (_super) {
+    __extends(TrainingSettingsComponent, _super);
+    function TrainingSettingsComponent() {
+        _super.apply(this, arguments);
+    }
+    TrainingSettingsComponent.prototype.handleChange = function () {
+        var newSettings = this.getValues();
+        Actions.Experiment.TrainingSettingsChanged(newSettings);
+    };
+    TrainingSettingsComponent.prototype.getElementValue = function (id) {
+        var comp = this.refs[id];
+        var result = null;
+        if (comp != null) {
+            result = comp.getDOMNode().value;
+        }
+        return result;
+    };
+    TrainingSettingsComponent.prototype.getValues = function () {
+        return {
+            learningRate: this.getElementValue("lr"),
+            regularization: this.getElementValue("reg"),
+            epochsPerRun: this.getElementValue("eprun"),
+            runs: this.getElementValue("run")
+        };
+    };
+    TrainingSettingsComponent.prototype.safeToString = function (val) {
+        if (val == null) {
+            return "";
+        }
+        return val.toString();
+    };
+    TrainingSettingsComponent.prototype.render = function () {
+        var _this = this;
+        return (React.createElement("div", null, React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Learning rate:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "lr", "className": "form-control", "value": this.props.learningRate}))), React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Regularization:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "reg", "className": "form-control", "value": this.props.regularization}))), React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Epochs/run:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "eprun", "className": "form-control", "value": this.props.epochsPerRun}))), React.createElement("div", {"className": "row"}, React.createElement("label", {"className": "col-xs-2"}, "Runs:"), React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"onChange": function () { return _this.handleChange(); }, "ref": "run", "className": "form-control", "value": this.props.runs})))));
+    };
+    return TrainingSettingsComponent;
+})(React.Component);
+exports.TrainingSettingsComponent = TrainingSettingsComponent;
 var PredictComponent = (function (_super) {
     __extends(PredictComponent, _super);
     function PredictComponent() {
@@ -448,7 +490,7 @@ var PredictComponent = (function (_super) {
     };
     PredictComponent.prototype.render = function () {
         var _this = this;
-        return (React.createElement("div", null, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, this.getColumnHeaders())), React.createElement("tbody", null, this.getExample())), React.createElement("input", {"type": "button", "onClick": function () { return _this.commitPredict(); }, "value": "Predict..."})));
+        return (React.createElement("div", null, React.createElement("table", {"className": "table table-striped"}, React.createElement("thead", null, React.createElement("tr", null, this.getColumnHeaders())), React.createElement("tbody", null, this.getExample())), React.createElement("div", {"className": "row"}, React.createElement("div", {"className": "col-xs-2"}, React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.commitPredict(); }, "value": "Predict..."})))));
     };
     return PredictComponent;
 })(React.Component);
@@ -501,6 +543,7 @@ var ExperimentController = (function (_super) {
                 inputDimension: experimentData.inputDimension,
                 outputDimension: experimentData.outputDimension
             },
+            trainingProps: experimentData.trainingSettings,
             predictProps: {
                 datatypes: experimentData.datatypes,
                 example: experimentData.example,
@@ -525,8 +568,9 @@ var ExperimentController = (function (_super) {
             React.createElement(ExperimentComponent.DatatypeMapperTable, React.__spread({}, this.state.mapperProps)) : null;
         var networkElement = this.state.networkProps.hiddenLayers != null ?
             React.createElement(ExperimentComponent.NetworkComponent, React.__spread({}, this.state.networkProps)) : null;
-        var trainElement = this.state.readyForTraining ? React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
-        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, this.getAlertElement()));
+        var trainElement = this.state.readyForTraining ? React.createElement(ExperimentComponent.TrainingSettingsComponent, React.__spread({}, this.state.trainingProps)) : null;
+        var trainButtonElement = this.state.readyForTraining ? React.createElement("input", {"className": "btn btn-primary", "type": "button", "onClick": function () { return _this.doTrain(); }, "value": "Train..."}) : null;
+        return (React.createElement("div", null, uploadElement, mapperElement, networkElement, trainElement, trainButtonElement, this.getAlertElement()));
     };
     ExperimentController.prototype.getPredictElement = function () {
         if (this.state.mode != "Predict") {
@@ -21205,6 +21249,12 @@ var ExperimentStore = (function (_super) {
             availableTypes: null,
             hiddenLayers: null,
             example: null,
+            trainingSettings: {
+                learningRate: "0.001",
+                regularization: "0.0001",
+                epochsPerRun: "1",
+                runs: "10"
+            },
             predicted: null,
             readyForTraining: false,
             readyForMapping: false,
@@ -21227,6 +21277,7 @@ var ExperimentStore = (function (_super) {
         this.dispatcher.register(Actions.Experiment.EXAMPLE_CHANGED, function (_) { return _this.exampleChanged(_); });
         this.dispatcher.register(Actions.Experiment.COMMIT_PREDICT, function () { return _this.predictCommited(); });
         this.dispatcher.register(Actions.Experiment.PREDICT_COMPLETE, function (_) { return _this.predictCompleted(_); });
+        this.dispatcher.register(Actions.Experiment.TRAINING_SETTINGS_CHANGED, function (_) { return _this.trainingSettingsChanged(_); });
     }
     ExperimentStore.prototype.getState = function () {
         return $.extend({}, this.state);
@@ -21320,7 +21371,10 @@ var ExperimentStore = (function (_super) {
             this.state.example = null;
             this.state.message = "Training model...";
             var layers = this.state.hiddenLayers != null ? this.state.hiddenLayers : [];
-            Actions.Experiment.DoTraining(this.experimentUrl, { hiddenLayers: layers });
+            Actions.Experiment.DoTraining(this.experimentUrl, {
+                hiddenLayers: layers,
+                settings: this.state.trainingSettings
+            });
             this.emitChange();
         }
     };
@@ -21357,6 +21411,10 @@ var ExperimentStore = (function (_super) {
     };
     ExperimentStore.prototype.predictCompleted = function (value) {
         this.state.predicted = value;
+        this.emitChange();
+    };
+    ExperimentStore.prototype.trainingSettingsChanged = function (data) {
+        this.state.trainingSettings = data;
         this.emitChange();
     };
     return ExperimentStore;
